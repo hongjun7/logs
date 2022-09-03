@@ -13,7 +13,7 @@ default:
   chart: false
   toc:
     selectors: 'h1,h2,h3'
-  sources: bootcdn
+  sources: unpkg
 
   page:
     mode: normal
@@ -35,7 +35,7 @@ default:
     full_width: false
     sharing: false
     comment: true
-    license: false
+    license: true
     pageview: false
     search: default
 
