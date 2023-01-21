@@ -34,7 +34,7 @@ tags: 표본오차 신뢰구간 중심극한정리 t분포
 
 표본에서 실제 얻은 값으로 모집단의 성질을 추정하기 위해서는, 수집한 데이터(표본평균)와 알고 싶은 값(모집단평균) 사이의 오차가 어떤 값이 될지를 고려해야 한다.
 
-<center><img src="https://github.com/hongjun7/log/blob/main/assets/230120_01.jpg?raw=true" width="600"></center>
+<center><img src="https://github.com/hongjun7/log/blob/main/assets/2023-01-20/01.jpg?raw=true" width="600"></center>
 
 모집단의 평균 $\mu$나 표준편차 $\sigma$ 등은 고정된 값이지만, 모집단 분포에서 얻은 표본 $x_1, x_2,...,x_n$은 확률변수이다.
 
@@ -58,7 +58,7 @@ tags: 표본오차 신뢰구간 중심극한정리 t분포
 
 표본오차의 분포에 관해 중요한 정보를 제공하는 것이 **중심극한정리(central limit theorem)**이다. 이는 모집단이 어떤 분포이던 간에, 동일한 확률분포를 가진 독립 확률 변수 $n$개의 평균의 분포는 $n$이 커질수록 정규분포에 가까워진다는 정리이다.
 
-<center><img src="https://github.com/hongjun7/log/blob/main/assets/230120_02.jpg?raw=true" width="600"></center>
+<center><img src="https://github.com/hongjun7/log/blob/main/assets/2023-01-20/02.jpg?raw=true" width="600"></center>
 
 표본크기 $n$이 커질수록 표본평균의 분포는 다음과 같은 정규분포 N$(\mu, \frac{\sigma}{\sqrt{n}})$로 근사할 수 있다.
 
@@ -77,7 +77,7 @@ tags: 표본오차 신뢰구간 중심극한정리 t분포
 
 표본크기 $n$이 커질수록 표본오차 $\bar x-\mu$의 분포는 다음 정규분포 N$(0, \frac{\sigma}{\sqrt{n}})$로 근사된다.
 
-<center><img src="https://github.com/hongjun7/log/blob/main/assets/230120_03.jpg?raw=true" width="400"></center>
+<center><img src="https://github.com/hongjun7/log/blob/main/assets/2023-01-20/03.jpg?raw=true" width="400"></center>
 
 
 표본오차의 분포는 모집단의 표준편차 $\sigma$와 표콘크기 $n$ 2개의 값만 정해지면 알 수 있다. 여기서 $\sigma/\sqrt{n}$ 을 **표준오차(standard error)**라 한다. $\sigma$는 모집단의 성질이므로, 표본에서 추정한 비편향표준편차 $s$를 $\sigma$ 대신 사용하여 $s/\sqrt{n}$을 표준오차로 삼는다. 이 때, 표본오차는 정규분포가 아니라, 정규분포와 닮은 **t분포**를 따르게 된다.
@@ -88,7 +88,7 @@ tags: 표본오차 신뢰구간 중심극한정리 t분포
 
 표본오차의 확률분포를 통해 오차가 어느 정도의 확률로 나타나는지를 표현할 수 있다. 오차를 정량화하기 위해 **신뢰구간(confidence inrterval)**은 모수가 어느 범위 안에 있는지를 확률적으로 보여주는 것으로 정의된다.
 
-<center><img src="https://github.com/hongjun7/log/blob/main/assets/230120_04.jpg?raw=true" width="600"></center>
+<center><img src="https://github.com/hongjun7/log/blob/main/assets/2023-01-20/04.jpg?raw=true" width="600"></center>
 
 신뢰 구간은 보통 표본에서 산출된 통계와 함께 제공된다. 예를 들어, "신뢰수준 95%에서 투표자의 35%~45%가 $x$ 후보를 지지하고 있다."라고 할 때 95%는 신뢰수준이고 35%~45%는 신뢰구간이며 모수($\theta$)는 $x$ 후보의 지지율이다. 
 
