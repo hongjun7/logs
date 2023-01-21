@@ -4,6 +4,9 @@ header:
 
   - title: Archive
     url: /archive.html
+  
+  - title: Tags
+    url: /tags.html
 
   - title: Curriculum-Vitae
     url: https://hongjun7.github.io/
