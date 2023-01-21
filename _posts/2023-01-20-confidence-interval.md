@@ -50,9 +50,13 @@ tags: 표본오차 신뢰구간 중심극한정리 t분포
 
 세부적으로는 **약한(weak)** 정의와 **강한(strong) 정의**가 있음을 참고하자.
 
-- 약한 큰 수의 법칙 : $\lim_{ n \to \infin } \Pr(|\overline{X}_n - \mu| < \epsilon) = 1$
+- 약한 큰 수의 법칙
 
-- 강한 큰 수의 법칙 : $\Pr( \lim_{ n \to \infin } \overline{X}_n = \mu) = 1$
+  $$\lim_{ n \rightarrow \infty } \Pr(|\overline{X}_n - \mu| < \epsilon) = 1$$
+
+- 강한 큰 수의 법칙
+
+  $$\Pr( \lim_{ n \rightarrow \infty } \overline{X}_n = \mu) = 1$$
 
 ### 중심극한정리
 
