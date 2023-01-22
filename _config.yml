@@ -84,7 +84,7 @@ toc:
 ##############################
 ## Mathjax
 mathjax: true
-mathjax_autoNumber: true
+mathjax_autoNumber: false
 
 ## Mermaid
 mermaid: # false (default), true
@@ -126,11 +126,12 @@ comments:
   ## Gitalk
   # please refer to https://github.com/gitalk/gitalk for more info.
   gitalk:
-    clientID     : 3d37dc0db29fd49543c9 # GitHub Application Client ID
-    clientSecret : d94c94189a1135550a58cfc732d445e622cfeb1c # GitHub Application Client Secret
-    repository   : log # GitHub repo
-    owner        : hongjun7 # GitHub repo owner
-    admin        : hongjun7 # GitHub repo owner and collaborators, only these guys can initialize GitHub issues, IT IS A LIST.
+    clientID    : 3d37dc0db29fd49543c9 # GitHub Application Client ID
+    clientSecret: d94c94189a1135550a58cfc732d445e622cfeb1c # GitHub Application Client Secret
+    repository  : log # GitHub repo
+    owner       : hongjun7 # GitHub repo owner
+    admin:
+      - hongjun7
 
   ## Valine
   # please refer to https://valine.js.org/en/ for more info.

@@ -8,7 +8,7 @@ default:
     archive:  /archive.html
     rss:  /feed.xml
   mathjax: true
-  mathjax_autoNumber: true
+  mathjax_autoNumber: false
   mermaid: false
   chart: false
   toc:
