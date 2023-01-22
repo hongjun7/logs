@@ -20,7 +20,7 @@ text_skin: # "default" (default), "dark", "forest", "ocean", "chocolate", "orang
 highlight_theme: # "default" (default), "tomorrow", "tomorrow-night", "tomorrow-night-eighties", "tomorrow-night-blue", "tomorrow-night-bright"
 url     : # the base hostname & protocol for your site e.g. https://www.someone.com
 baseurl : # does not include hostname
-title   : '[T3] Logs for Data Analysis'
+title   : 'Log.hongjun7'
 description: > # this means to ignore newlines until "Language & timezone"
 
 
@@ -117,7 +117,7 @@ sharing:
 ## => Comments
 ##############################
 comments:
-  provider: false # false (default), "disqus", "gitalk", "valine", "custom"
+  provider: gitalk # false (default), "disqus", "gitalk", "valine", "custom"
 
   ## Disqus
   disqus:
@@ -126,12 +126,11 @@ comments:
   ## Gitalk
   # please refer to https://github.com/gitalk/gitalk for more info.
   gitalk:
-    clientID    : # GitHub Application Client ID
-    clientSecret: # GitHub Application Client Secret
-    repository  : # GitHub repo
-    owner       : # GitHub repo owner
-    admin: # GitHub repo owner and collaborators, only these guys can initialize GitHub issues, IT IS A LIST.
-      # - your GitHub Id
+    clientID     : 3d37dc0db29fd49543c9 # GitHub Application Client ID
+    clientSecret : d94c94189a1135550a58cfc732d445e622cfeb1c # GitHub Application Client Secret
+    repository   : log # GitHub repo
+    owner        : hongjun7 # GitHub repo owner
+    admin        : hongjun7 # GitHub repo owner and collaborators, only these guys can initialize GitHub issues, IT IS A LIST.
 
   ## Valine
   # please refer to https://valine.js.org/en/ for more info.
