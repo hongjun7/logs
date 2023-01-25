@@ -1,5 +1,5 @@
 header:
-  - title: Logs
+  - title: Posts
     url: /
 
   - title: Archive
@@ -8,5 +8,5 @@ header:
   # - title: Tags
   #   url: /tags.html
 
-  - title: Profile
+  - title: About
     url: https://hongjun7.github.io/
