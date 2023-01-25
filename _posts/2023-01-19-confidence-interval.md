@@ -1,6 +1,6 @@
 ---
 title: '[STAT] 표본오차와 신뢰구간'
-tags: 통계 신뢰구간
+tags: statistics
 ---
 
 ## 통계적 조사

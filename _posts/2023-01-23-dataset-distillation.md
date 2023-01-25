@@ -1,6 +1,6 @@
 ---
-title: '[DATA] Dataset Distillation: A Comprehensive Review'
-tags: 논문 데이터  
+title: '[PAPER] Dataset Distillation: A Comprehensive Review'
+tags: research distillation
 ---
 
 ## 배경

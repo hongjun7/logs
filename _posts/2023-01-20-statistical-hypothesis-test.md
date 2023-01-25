@@ -1,6 +1,6 @@
 ---
 title: '[STAT] 가설검정'
-tags: 통계 가설검정
+tags: statistics
 ---
 
 
