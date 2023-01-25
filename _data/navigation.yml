@@ -1,12 +1,12 @@
 header:
-  - title: POSTS
+  - title: Logs
     url: /
 
-  - title: ARCHIVE
+  - title: Archive
     url: /archive.html
   
   # - title: Tags
   #   url: /tags.html
 
-  - title: PROFILE
+  - title: Profile
     url: https://hongjun7.github.io/
