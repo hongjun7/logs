@@ -1,12 +1,9 @@
 header:
-  - title: Posts
+  - title: Assets
     url: /
 
-  - title: Archive
-    url: /archive.html
-  
-  # - title: Tags
-  #   url: /tags.html
+  - title: Tags
+    url: /tags.html
 
-  - title: About
-    url: https://hongjun7.github.io/
+  # - title: About
+  #   url: https://hongjun7.github.io/
