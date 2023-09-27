@@ -1,5 +1,5 @@
 .header {
-  background: #ffffff;
+  background: rgb(46, 46, 51);
   a {
     font-weight: map-get($base, font-weight);
     text-decoration: none !important;
@@ -77,7 +77,7 @@
     display: inline-block;
     font-size: map-get($base, font-size-h4);
     font-weight: 700;
-    font-family: -apple-system, BlinkMacSystemFont, segoe ui, Roboto, Oxygen, Ubuntu, Cantarell, open sans, helvetica neue, sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, sofia-pro, Arial, sans-serif;
     @include media-breakpoint-down(md) {
       font-size: map-get($base, font-size-h4-small);
     }
@@ -109,7 +109,7 @@
 
 .navigation__item {
   font-weight: 500;
-  font-family: -apple-system, BlinkMacSystemFont, segoe ui, Roboto, Oxygen, Ubuntu, Cantarell, open sans, helvetica neue, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, sofia-pro, Arial, sans-serif;
   &::after {
     display: block;
     margin-bottom: -4px;
@@ -120,7 +120,7 @@
 
 .navigation__item--active {
   font-weight: 500;
-  font-family: -apple-system, BlinkMacSystemFont, segoe ui, Roboto, Oxygen, Ubuntu, Cantarell, open sans, helvetica neue, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, sofia-pro, Arial, sans-serif;
   a {
     @include link-colors($main-color-1, $main-color-1);
   }
