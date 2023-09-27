@@ -1,9 +1,9 @@
 header:
-  - title: Assets
+  - title: Logs
     url: /
 
   - title: Tags
     url: /tags.html
 
-  # - title: About
-  #   url: https://hongjun7.github.io/
+  - title: About
+    url: https://hongjun7.github.io/

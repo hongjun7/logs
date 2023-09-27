@@ -1,24 +1,7 @@
 ---
-title: '[PAPER] Dataset Distillation: A Comprehensive Review'
-tags: research distillation
+title: 'Evolving Knowledge Graphs'
+tags: KG
 ---
 
-## 배경
-
-## 관련 연구
-
-### Knowledge Distillation
-### Core-set or Instance Selection
-### Generative Models
-### Hyperparameter Optimization
-
-## Dataset Distillation
-
-## 실험결과
-
-## 고찰
-
-## 결론
-
 ## References
-- [Yu et al. 2023. Dataset Distillation: A Comprehensive Review](https://arxiv.org/pdf/2301.07014.pdf)
+- [J. Liu, Q. Zhang, L. Fu, X. Wang and S. Lu, "Evolving Knowledge Graphs," IEEE INFOCOM 2019 - IEEE Conference on Computer Communications, Paris, France, 2019, pp. 2260-2268, doi: 10.1109/INFOCOM.2019.8737547.](https://www.cs.sjtu.edu.cn/~fu-ly/paper/EvolvingKG.pdf)
