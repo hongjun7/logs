@@ -6,7 +6,7 @@
   @include flexbox();
   @include align-items(center);
   color: $footer-text-color;
-  background: rgb(46, 46, 51);
+  background: rgba(#fff, .15);
   a {
     @include link-colors ($footer-text-color, $main-color-1);
   }
