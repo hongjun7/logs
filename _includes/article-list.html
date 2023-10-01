@@ -60,9 +60,9 @@
             {%- if _article.excerpt and include.show_excerpt -%}
               <div class="article__content" itemprop="description articleBody">
                 {%- if _excerpt_type == 'html' -%}
-                  {{ _article.excerpt }}
+                  {{ _article.subtitle }}
                 {%- else -%}
-                  {{ _article.excerpt | strip_html | strip | truncate: _excerpt_truncate }}
+                  {{ _article.subtitle | strip_html | strip | truncate: _excerpt_truncate }}
                 {%- endif -%}
               </div>
             {%- endif -%}

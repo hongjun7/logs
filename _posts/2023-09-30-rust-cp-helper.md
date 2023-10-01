@@ -1,7 +1,7 @@
 ---
-title: 'Competitive Programming with Rust'
-subtitle: 'A guide that introduces competitive programming with Rust and provides useful resources.'
+title: Competitive Programming with Rust
 tags: Rust
+subtitle: A guide that introduces competitive programming with Rust and provides useful resources.
 ---
 
 [Competitive Programming](https://en.wikipedia.org/wiki/Competitive_programming) demands a strong understanding of algorithms, data structures, and the ability to code swiftly. [Rust](https://www.rust-lang.org/), with its safety features and high-performance capabilities, is a good choice for competitive programming.
