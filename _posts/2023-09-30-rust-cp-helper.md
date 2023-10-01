@@ -1,6 +1,6 @@
 ---
 title: Competitive Programming with Rust
-tags: Rust
+tags: cp rust
 subtitle: A guide that introduces competitive programming with Rust and provides useful resources.
 ---
 
