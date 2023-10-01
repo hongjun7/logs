@@ -1,5 +1,6 @@
 ---
 title: 'Competitive Programming with Rust'
+subtitle: 'A guide that introduces competitive programming with Rust and provides useful resources.'
 tags: Rust
 ---
 
