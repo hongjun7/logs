@@ -1,7 +1,8 @@
 .header {
   background: rgba(#fff, .15);
   a {
-    font-weight: map-get($base, font-weight);
+    font-weight: 700;
+    font-family: 'Roboto', sans-serif;
     text-decoration: none !important;
     @include link-colors($header-text-color, $main-color-1);
   }
