@@ -5,7 +5,7 @@ subtitle: This article introduces an algorithm for rewriting in materialization-
 ---
 
 
-Let's consider the problems that the *owl:sameAs* property affects to reasoning.
+Let's consider a problem that the *owl:sameAs* property affects to reasoning.
 
 The semantics of *owl:sameAs* can be captured explicitly using program $P_≈$, consisting of rules $(≈_1)-(≈_5)$, which axiomatises *owl:sameAs* as a congruence relation. We call each set of resources all of which are equal to each other an *owl:sameAs-clique*.
 
@@ -99,7 +99,7 @@ To illustrate a strategy, let's use the program $P_{ex}$ from above: Recall that
   As a result, for $Q_1$, we match the triple pattern of $ρ(Q1)$ to $T$, obtaining one answer $ν_1$ = {$?x → $ :Obama $, ?y → $:US }. Next, we project $?y$ from $ν_1$ and get 3 occurrences of $µ_1$ since the *owl:sameAsclique* of *:US* has a size of 3. Finally, we expand each occurrence of $µ_1$ to $µ_2$, resulting in all 6 desired results.
 
 
-- **$Q_2 :=$ SELECT $?y$ WHERE { $?x$ :presidentOf :US $.$ BIND ( STR ($?x$) AS $?y$) $ }**
+- **$Q_2 :=$ SELECT $?y$ WHERE { $?x$ :presidentOf :US $.$ BIND ( STR ($?x$) AS $?y$) }**
 
   On $T^ρ$, query $Q_2$ produces answers $\tau_1=$ { $ ?y → $ "Obama" } and $\tau_2=$ {$ ?y → $ "USPresident" }; in contrast, on T, query $ρ (Q_2)$ yields only $\tau_1$, which does not expand into $\tau_2$ because the strings "Obama" and "USPresident" are not equal. Therefore **evaluation should expand answers before evaluating builtin functions**. 
 
