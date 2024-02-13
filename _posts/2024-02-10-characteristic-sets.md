@@ -138,15 +138,91 @@ To overcome the limitation of the independence assumption in data queries, we ai
 <p align="left"> <img src="https://github.com/hongjun7/logs/blob/main/_posts/image/2024-02-10-characteristic-sets/fig7.png?raw=true" width="75%"> </p>
 
 ### Evaluation
+##### #1. Single Join Queries
+
+For the data sets [Yago](https://yago-knowledge.org/) and [LibraryThing](https://cseweb.ucsd.edu/~jmcauley/datasets.html#social_data), queries of the form $(?S, p_1, ?O_1),(?S, p_2, ?O_2)$ were tested, where all possible combinations of p1, p2 were considered. This resulted in $1751$ queries for Yago and $19062990$ queries for LibraryThing.
 
 <p align="left"> <img src="https://github.com/hongjun7/logs/blob/main/_posts/image/2024-02-10-characteristic-sets/table1.png?raw=true" width="75%"> </p>
 
 <p align="left"> <img src="https://github.com/hongjun7/logs/blob/main/_posts/image/2024-02-10-characteristic-sets/table2.png?raw=true" width="75%"> </p>
 
+##### #2. Complex Queries
+
+To study cardinality estimation for more complex queries, queries with up to 6 joins and including additional object constraints were tested. The queries and the detailed results are included in the appendix.
+
 <p align="left"> <img src="https://github.com/hongjun7/logs/blob/main/_posts/image/2024-02-10-characteristic-sets/table3.png?raw=true" width="75%"> </p>
 
 <p align="left"> <img src="https://github.com/hongjun7/logs/blob/main/_posts/image/2024-02-10-characteristic-sets/table4.png?raw=true" width="75%"> </p>
 
+##### #3. Other Data Sets
+
+<p align="left"> <img src="https://github.com/hongjun7/logs/blob/main/_posts/image/2024-02-10-characteristic-sets/fig8.png?raw=true" width="75%"> </p>
+
+
+
+In result, reducing the number of characteristic sets significantly improves efficiency without significantly compromising accuracy. Despite a reduction by more than a factor of 40, over 90% of estimates deviate by less than a factor of two. There is a minor issue with predicate combinations resulting in empty predictions, possibly addressed in the future by switching to a more conservative cardinality estimate when needed.
+
+## Appendix
+
+These are the concrete queries used in **Evaluation** and the individual cardinality estimates of all database systems in this section.
+
+In some cases, a database system predicted a cardinality of less than one, which makes no sense for non-empty query results. When this happened, the estimates were rounded up to $1$.
+
+##### #1. LibraryThing
+
+**Q1:** select ?s ?t ?y where { ?s <hasTitle> ?t. ?s <hasAuthor> ”Jane Austen”. ?s <inYear> ?y }
+
+**Q2:** select ?s ?t where { ?s <hasTitle> ?t. ?s <hasAuthor> ”Jane Austen”. ?s <inYear> <2003> }
+
+**Q3:** select ?s where { ?s <crime> ?b. ?s <romance> ?b2. ?s <poetry> ?b3. ?s <hasFavoriteAuthor> ”Neil Gaiman” }
+
+**Q4:** select ?s where { ?s <crime> ?b. ?s <politics> ?b2. ?s <romance> ?b3. ?s <poetry> ?b4. ?s <cookbook> ?b5. ?s <ocean\ life> ?b6. ?s <new\ mexico> ?b7 }
+
+**Q5:** select ?s ?t1 ?t2 where { ?s <inYear> <1975>. ?s <hasAuthor> ”T.S. Eliot”. ?s <hasTitle> ?t1. ?s <hasTitle> ?t2 }
+
+**Q6:** select ?s where { ?s < thriller > ?b. ?s < politics > ?b2. ?s <conspiracy> ?b3. ?s <hasFavoriteAuthor> ?a }
+
+**Q7:** select ?s where { ?s < thriller > ?b. ?s < politics > ?b2. ?s <conspiracy> ?b3. ?s <hasFavoriteAuthor> ”Robert B. Parker” }
+
+**Q8:** select ?s where { ?s < thriller > ?b. ?s < politics > ?b2. ?s <conspiracy> ?b3. ?s <hasFavoriteAuthor> ”Noam
+Chomsky” }
+
+**Q9:** select ?s where { ?s < politics > ?b1. ?s <society> ?b2. ?s <future> ?b3. ?s <democracy> ?b4. ?s <british> ?
+b5. ?s <hasFavoriteAuthor> ”Aldous Huxley” }
+
+**Q10:** select ?s where { ?s < politics > ?b1. ?s <society> ?b2. ?s <future> ?b3. ?s <democracy> ?b4. ?s <british> ?b5. ?s <hasFavoriteAuthor> ”Aldous Huxley”. ?s <hasFavoriteAuthor> ”George Orwell” }
+
+The individual cardinality estimates for the following queries are shown below.
+
+<p align="left"> <img src="https://github.com/hongjun7/logs/blob/main/_posts/image/2024-02-10-characteristic-sets/table5.png?raw=true" width="95%"> </p>
+
+##### #2. Yago
+
+**Q1:** select ?s ?l ?n ?t where { ?s <bornInLocation> ?l. ?s <isCalled> ?n. ?s <type> ?t. }
+
+**Q2:** select ?s ?n ?t where { ?s <bornInLocation> <Stockholm>. ?s <isCalled> ?n. ?s <type> ?t. }
+
+**Q3:** select ?s ?c ?n ?w where { ?s <producedInCountry> ?c. ?s <isCalled> ?n. ?s <hasWebsite> ?w }
+
+**Q4:** select ?s ?n ?w where { ?s <producedInCountry> <Spain>. ?s <isCalled> ?n. ?s <hasWebsite> ?w }
+
+**Q5:** select ?s ?l ?n ?d ?t where { ?s <diedInLocation> ?l. ?s <isCalled> ?n. ?s <diedOnDate> ?d. ?s <type> ?t }
+
+**Q6:** select ?s ?n ?d ?t where { ?s <diedInLocation> <Paris>. ?s <isCalled> ?n. ?s <diedOnDate> ?d. ?s <type> ?t }
+
+**Q7:** select ?s ?n ?d where { ?s <diedInLocation> <Paris>. ?s <isCalled> ?n. ?s <diedOnDate> ?d. ?s <type> <wordnet person 100007846> }
+
+**Q8:** select ?s ?l ?u ?c ?m where { ?s <hasOfficialLanguage> ?l. ?s <hasUTCOffset> ?
+u. ?s <hasCapital> ?c. ?s <hasCurrency> ?m }
+
+**Q9:** select ?s ?l ?c ?m where { ?s <hasOfficialLanguage> ?l. ?s <hasUTCOffset> <1>. ?s <hasCapital> ?c. ?s <hasCurrency> ?m }
+
+**Q10:** select ?s ?c ?m where { ?s <hasOfficialLanguage> <French language>. ?s <hasUTCOffset> <1>. ?s <hasCapital> ?c. ?s <hasCurrency> ?m }
+
+
+The individual cardinality estimates for the following queries are shown below.
+
+<p align="left"> <img src="https://github.com/hongjun7/logs/blob/main/_posts/image/2024-02-10-characteristic-sets/table6.png?raw=true" width="95%"> </p>
 
 ## Reference
 
