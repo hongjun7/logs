@@ -24,7 +24,7 @@ Let us illustrate this with an example. Assume that $R$ is the set of data tripl
 
 $$ count(S) = | \lbrace s|S_C(s)=S \rbrace | $$ 
 
-Then we can be compute the result cardinality of a star-join query by looking up the number of occurrences of the characteristic sets:
+Then we can compute the result cardinality of a star-join query by looking up the number of occurrences of the characteristic sets:
 
 <p align="center"> <img src="https://github.com/hongjun7/logs/blob/main/_posts/image/2024-02-10-characteristic-sets/fig2.png?raw=true" width="80%"> </p>
 
