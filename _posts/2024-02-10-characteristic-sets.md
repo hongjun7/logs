@@ -178,8 +178,7 @@ Q4: select ?s where { ?s <crime> ?b. ?s <politics> ?b2. ?s <romance> ?b3. ?s <po
 Q5: select ?s ?t1 ?t2 where { ?s <inYear> <1975>. ?s <hasAuthor> ”T.S. Eliot”. ?s <hasTitle> ?t1. ?s <hasTitle> ?t2 }
 Q6: select ?s where { ?s < thriller > ?b. ?s < politics > ?b2. ?s <conspiracy> ?b3. ?s <hasFavoriteAuthor> ?a }
 Q7: select ?s where { ?s < thriller > ?b. ?s < politics > ?b2. ?s <conspiracy> ?b3. ?s <hasFavoriteAuthor> ”Robert B. Parker” }
-Q8: select ?s where { ?s < thriller > ?b. ?s < politics > ?b2. ?s <conspiracy> ?b3. ?s <hasFavoriteAuthor> ”Noam
-Chomsky” }
+Q8: select ?s where { ?s < thriller > ?b. ?s < politics > ?b2. ?s <conspiracy> ?b3. ?s <hasFavoriteAuthor> ”Noam Chomsky” }
 Q9: select ?s where { ?s < politics > ?b1. ?s <society> ?b2. ?s <future> ?b3. ?s <democracy> ?b4. ?s <british> ?
 b5. ?s <hasFavoriteAuthor> ”Aldous Huxley” }
 Q10: select ?s where { ?s < politics > ?b1. ?s <society> ?b2. ?s <future> ?b3. ?s <democracy> ?b4. ?s <british> ?b5. ?s <hasFavoriteAuthor> ”Aldous Huxley”. ?s <hasFavoriteAuthor> ”George Orwell” }
@@ -199,8 +198,7 @@ Q4: select ?s ?n ?w where { ?s <producedInCountry> <Spain>. ?s <isCalled> ?n. ?s
 Q5: select ?s ?l ?n ?d ?t where { ?s <diedInLocation> ?l. ?s <isCalled> ?n. ?s <diedOnDate> ?d. ?s <type> ?t }
 Q6: select ?s ?n ?d ?t where { ?s <diedInLocation> <Paris>. ?s <isCalled> ?n. ?s <diedOnDate> ?d. ?s <type> ?t }
 Q7: select ?s ?n ?d where { ?s <diedInLocation> <Paris>. ?s <isCalled> ?n. ?s <diedOnDate> ?d. ?s <type> <wordnet person 100007846> }
-Q8: select ?s ?l ?u ?c ?m where { ?s <hasOfficialLanguage> ?l. ?s <hasUTCOffset> ?
-u. ?s <hasCapital> ?c. ?s <hasCurrency> ?m }
+Q8: select ?s ?l ?u ?c ?m where { ?s <hasOfficialLanguage> ?l. ?s <hasUTCOffset> ?u. ?s <hasCapital> ?c. ?s <hasCurrency> ?m }
 Q9: select ?s ?l ?c ?m where { ?s <hasOfficialLanguage> ?l. ?s <hasUTCOffset> <1>. ?s <hasCapital> ?c. ?s <hasCurrency> ?m }
 Q10: select ?s ?c ?m where { ?s <hasOfficialLanguage> <French language>. ?s <hasUTCOffset> <1>. ?s <hasCapital> ?c. ?s <hasCurrency> ?m }
 ```
