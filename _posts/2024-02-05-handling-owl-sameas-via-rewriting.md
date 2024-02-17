@@ -40,7 +40,7 @@ To reduce these numbers, we can choose a representative resource for each *owl:s
 
 The materialisation of $P_{ex}$ then contains only the triple $ ⟨ $*:Obama*$, $ *:presidentOf*$, $ *:US*$ ⟩ $ and this makes the number of derivations of *owl:sameAs* triples drop from over 60 to just 6.
 
-<p align="center"> <img src="https://github.com/hongjun7/logs/blob/main/_posts/image/2024-02-05-handling-owl-sameas-via-rewriting/fig1.png?raw=true" width="60%"> </p>
+<p align="center"> <img src="https://github.com/hongjun7/logs/blob/main/_posts/image/2024-02-05-handling-owl-sameas-via-rewriting/fig1.png?raw=true" width="40%"> </p>
 
 Since *owl:sameAs* triples can be derived continuously during materialisation, rewriting cannot be applied as preprocessing; moreover, to ensure that rewriting does not affect query answers.
 Thus, we may need to continuously rewrite both triples and rules: rewriting only triples can be insufficient. For example, if we choose *:US* as the representative of *:USA*, *:US* and *:America*, then rule $(S)$ will not be applicable, and we will fail to derive that *:USPresident* is equal to *:Obama*. 
@@ -59,17 +59,19 @@ To extend the original seminaive algorithm with rewriting, we allow each thread 
 
 - Second, a thread can rewrite outdated facts—that is, facts containing a resource that is not a representative of itself. To avoid iteration over all facts in $T$, the thread extracts a resource $c$ from the queue $C$ of unprocessed outdated resources, and uses indexes by [Motik et al. (2014)](https://www.cs.ox.ac.uk/dan.olteanu/papers/mnpho-aaai14.pdf) to identify each fact $F ∈ T$ containing $c$. The thread then removes each such $F$ from $T$, and it adds $ρ(F)$ to $T$.
   ($ρ$ is a mapping function that maps resources to their representatives)
-  <p align="left"> <img src="https://github.com/hongjun7/logs/blob/main/_posts/image/2024-02-05-handling-owl-sameas-via-rewriting/fig2_2.png?raw=true" width="75%"> </p>
+  <p align="left"> <img src="https://github.com/hongjun7/logs/blob/main/_posts/image/2024-02-05-handling-owl-sameas-via-rewriting/fig2_2.png?raw=true" width="55%"> </p>
 
 
 - Third, a thread can extract and process an unprocessed fact $F$ in $T$. The thread first checks whether $F$ is outdated $($i.e., whether $F ≠ ρ(F)$$)$; if so, the thread removes $F$ from $T$ and adds $ρ(F)$ to $T$. If $F$ is not outdated but is of the form $⟨ a, $*owl:sameAs*$, b ⟩$ with $a ≠ b$, the thread chooses a representative of the two resources, updates $ρ$, and adds the other resource to queue $C$. The thread derives a contradiction if $F$ is of the form $⟨ a, $*owl:differentFrom*$, a ⟩$. Otherwise, the thread processes $F$ by partially instantiating the rules in $P$ containing a body atom that matches $F$, and applying such rules to $T$ as described by [Motik et al. (2014)](https://www.cs.ox.ac.uk/dan.olteanu/papers/mnpho-aaai14.pdf).
   <p align="left"> <img src="https://github.com/hongjun7/logs/blob/main/_posts/image/2024-02-05-handling-owl-sameas-via-rewriting/fig2_3.png?raw=true" width="95%"> </p>
 
-<p align="center"> <img src="https://github.com/hongjun7/logs/blob/main/_posts/image/2024-02-05-handling-owl-sameas-via-rewriting/algo2.png?raw=true" width="90%"> </p>
-
 The process of rewriting rules in RDFox involves efficiently identifying rules matching a fact using an index, which may need updating when $ρ$ changes. However, due to the complexity of updating the index in parallel, this operation is performed serially. Specifically, when all threads are waiting (indicating that all facts have been processed), a single thread updates $P$ to $ρ(P)$, reindexes it, and inserts the updated rules into the queue $R$ for reevaluation. Despite being a parallelization bottleneck, experiments have shown that the time spent on this process is not significant for programs of moderate size.
 
 Instead of physically removing facts from $T$, the approach involves marking them as outdated. During the matching of the body atoms of partially instantiated rules, marked facts are skipped. This entire process is lock-free, and the removal of all marked facts is performed in a postprocessing step.
+
+The algorithms can be written as follows:
+
+<p align="center"> <img src="https://github.com/hongjun7/logs/blob/main/_posts/image/2024-02-05-handling-owl-sameas-via-rewriting/algo2.png?raw=true" width="90%"> </p>
 
 Table 1 shows six steps of an application of the algorithm to the example program $P_{ex}$ on a single thread. Some resource names have been abbreviated for convenience, and $≈$ abbreviates *owl:sameAs*. The $⊲$ symbol identifies the last fact extracted from $T$. Facts are numbered for easier referencing, and their (re)derivation is indicated on the right: $R(n)$ or $S(n)$ means that the fact was obtained from fact $n$ and rule $R$ or $S$; moreover, we rewrite facts immediately after merging resources, so $W(n)$ identifies a rewritten version of fact $n$, and $M(n)$ means that a fact was marked outdated because fact $n$ caused $ρ$ to change.
 

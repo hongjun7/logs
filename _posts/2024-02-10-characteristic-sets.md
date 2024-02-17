@@ -80,14 +80,11 @@ When merging characteristic sets, we have two choices:
 
 - We can split a characteristic set $S$ into two parts $S_1$, $S_2$ that can then be merged individually.
 
-As a set is defined as following:
-
+Assume we have 4 annotated characteristic sets
 $$
 \{ (predicate_0, count_0), (predicate_1, count_1), ... , distinct \}
 $$
-
-
-Assume we have 4 annotated characteristic sets:
+:
 
 $$
 \begin{aligned}
