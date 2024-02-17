@@ -170,7 +170,7 @@ In some cases, a database system predicted a cardinality of less than one, which
 
 ##### #1. LibraryThing
 
-```javascript
+```csharp
 Q1: select ?s ?t ?y where { ?s <hasTitle> ?t. ?s <hasAuthor> ”Jane Austen”. ?s <inYear> ?y }
 Q2: select ?s ?t where { ?s <hasTitle> ?t. ?s <hasAuthor> ”Jane Austen”. ?s <inYear> <2003> }
 Q3: select ?s where { ?s <crime> ?b. ?s <romance> ?b2. ?s <poetry> ?b3. ?s <hasFavoriteAuthor> ”Neil Gaiman” }
@@ -190,7 +190,7 @@ The individual cardinality estimates for the following queries are shown below.
 
 ##### #2. Yago
 
-```javascript
+```csharp
 Q1: select ?s ?l ?n ?t where { ?s <bornInLocation> ?l. ?s <isCalled> ?n. ?s <type> ?t. }
 Q2: select ?s ?n ?t where { ?s <bornInLocation> <Stockholm>. ?s <isCalled> ?n. ?s <type> ?t. }
 Q3: select ?s ?c ?n ?w where { ?s <producedInCountry> ?c. ?s <isCalled> ?n. ?s <hasWebsite> ?w }
