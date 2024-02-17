@@ -1,5 +1,5 @@
 ---
-title: "Characteristic Sets: Accurate Cardinality Estimation for RDF Queries with Multiple Joins"
+title: "Characteristic Sets: Cardinality Estimation for RDF Queries"
 tags: kg query cardinality estimation
 subtitle: This post introduces an algorithm for rewriting in materialization-based OWL 2 RL systems, guaranteeing correctness, improving efficiency, and enabling effective parallelization, resulting in orders of magnitude reduction in reasoning times on practical datasets.
 ---
