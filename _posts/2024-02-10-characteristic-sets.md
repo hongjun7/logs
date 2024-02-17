@@ -179,8 +179,7 @@ Q5: select ?s ?t1 ?t2 where { ?s <inYear> <1975>. ?s <hasAuthor> ”T.S. Eliot�
 Q6: select ?s where { ?s < thriller > ?b. ?s < politics > ?b2. ?s <conspiracy> ?b3. ?s <hasFavoriteAuthor> ?a }
 Q7: select ?s where { ?s < thriller > ?b. ?s < politics > ?b2. ?s <conspiracy> ?b3. ?s <hasFavoriteAuthor> ”Robert B. Parker” }
 Q8: select ?s where { ?s < thriller > ?b. ?s < politics > ?b2. ?s <conspiracy> ?b3. ?s <hasFavoriteAuthor> ”Noam Chomsky” }
-Q9: select ?s where { ?s < politics > ?b1. ?s <society> ?b2. ?s <future> ?b3. ?s <democracy> ?b4. ?s <british> ?
-b5. ?s <hasFavoriteAuthor> ”Aldous Huxley” }
+Q9: select ?s where { ?s < politics > ?b1. ?s <society> ?b2. ?s <future> ?b3. ?s <democracy> ?b4. ?s <british> ?b5. ?s <hasFavoriteAuthor> ”Aldous Huxley” }
 Q10: select ?s where { ?s < politics > ?b1. ?s <society> ?b2. ?s <future> ?b3. ?s <democracy> ?b4. ?s <british> ?b5. ?s <hasFavoriteAuthor> ”Aldous Huxley”. ?s <hasFavoriteAuthor> ”George Orwell” }
 ```
 
