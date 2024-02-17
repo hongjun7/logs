@@ -7,9 +7,7 @@ layout: none
   <head>
     {%- include analytics.html -%}
     {%- include head.html -%}
-    {% if page.use_math %}
-      {% include mathjax_support.html %}
-    {% endif %}
+    {%- include mathjax_support.html -%}
     <script>
       {%- include scripts/utils/utils.js -%}
       {%- include scripts/lib/throttle.js -%}
