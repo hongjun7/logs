@@ -4,7 +4,7 @@ tags: kg query cardinality estimation
 subtitle: This post introduces an algorithm for rewriting in materialization-based OWL 2 RL systems, guaranteeing correctness, improving efficiency, and enabling effective parallelization, resulting in orders of magnitude reduction in reasoning times on practical datasets.
 ---
 
-### Plain characteristic sets
+## Plain characteristic sets
 
 While RDF is used usually without a fixed schema, some kind of latent soft schema in the data frequently occurs: *Book*s tend to have *author*s and *title*s, etc. Although we might not be able to clearly classify an entity as "book" (due to the lack of schema information), we observe that we can *characterize* an entity by its emitting edges. For each entity $s$ occuring in an RDF data set $R$, we define its ***charateristic set $S_C(s)$*** and a ***set of charateristic sets $S_C(R)$*** as follows:
 
@@ -32,7 +32,7 @@ The cardinality computation is exact. This kind of computation works for an arbi
 
 This observation makes characteristic sets attractive for RDF star join cardinality computations. However, this simple and exact computation is only possible due to the keyword $distinct$: in the general case, we have to take into account that the joins can produce duplicate bindings for $?e$ (due to different bindings of $?a$ and $?b$).
 
-### Occurrence annotations
+## Occurrence annotations
 
 For the above-mentioned reason, we annotate each predicate in a characteristic set with the number of occurrences of this predicate in entities belonging to the characteristic set.
 
@@ -50,7 +50,7 @@ The first column tells us that with a $distinct$ clause, we get $1000$ results. 
 
 In contrast to the case with $distinct$, this computation is no longer exact in general: we average over the whole characteristic set and, therefore, introduce some error. However, entities belonging to the same characteristic set tend to be very similar in this respect. Thus, using the count for multiplicity estimations leads to very accurate predictions.
 
-### Queries with bounded objects
+## Queries with bounded objects
 
 Let's define *conditional selectivity*:
 
@@ -68,7 +68,7 @@ Putting everything together, the complete algorithm for star join cardinality es
 
 <p align="left"> <img src="https://github.com/hongjun7/logs/blob/main/_posts/image/2024-02-10-characteristic-sets/fig5.png?raw=true" width="75%"> </p>
 
-### Handling diverse sets
+## Handling diverse sets
 
 The number of characteristic sets in a data can be very large. To manage this complexity, the system keeps only the most frequent $10,000$ characteristic sets. The remaining sets are then merged with the most frequent ones, ensuring efficient and streamlined data representation.
 
@@ -108,21 +108,21 @@ Or we could split $S_4$ into {$author$} and {$title$}, and update $S_1$ into {$(
 
 Overestimation is prefered as it usually derives only a small error and is often less dangerous for the resulting execution plan.
 
-### Principles for cardinality estimator
+## Principles for cardinality estimator
 
-##### #1. Calculate cardinality estimate once per equivalent query plans
+#### #1. Calculate cardinality estimate once per equivalent query plans
 - Cardinality is independent of the plan structure.
 - It should not change by changing the ordering of operators.
 
-##### #2. Use maximum amount of consistent correlation information
+#### #2. Use maximum amount of consistent correlation information
 -  A typical query graph has a lot of joins, we can have consistent information for only a few portions of the graph.
 - Characteristic sets are used to estimate to the maximum portion of the graph, before starting to use join estimates.
 
-##### #3. Assume independence if no correlation information is available
+#### #3. Assume independence if no correlation information is available
 - If no consistent information is available, we assume independence to calculate estimates using general join stats.
 - Error is relatively low, since independence is being assumed very **“late”** in cost estimation.
 
-### Estimation Algorithm
+## Estimation Algorithm
 
 Given a join graph $Q = (V, E)$, we can directly estimate the result cardinality using the independence assumption:
 
@@ -134,8 +134,9 @@ To overcome the limitation of the independence assumption in data queries, we ai
 
 <p align="left"> <img src="https://github.com/hongjun7/logs/blob/main/_posts/image/2024-02-10-characteristic-sets/fig7.png?raw=true" width="75%"> </p>
 
-### Evaluation
-##### #1. Single Join Queries
+## Evaluation
+
+#### #1. Single Join Queries
 
 For the data sets [Yago](https://yago-knowledge.org/) and [LibraryThing](https://cseweb.ucsd.edu/~jmcauley/datasets.html#social_data), queries of the form $(?S, p_1, ?O_1),(?S, p_2, ?O_2)$ were tested, where all possible combinations of p1, p2 were considered. This resulted in $1751$ queries for Yago and $19062990$ queries for LibraryThing.
 
@@ -143,7 +144,7 @@ For the data sets [Yago](https://yago-knowledge.org/) and [LibraryThing](https:/
 
 <p align="left"> <img src="https://github.com/hongjun7/logs/blob/main/_posts/image/2024-02-10-characteristic-sets/table2.png?raw=true" width="75%"> </p>
 
-##### #2. Complex Queries
+#### #2. Complex Queries
 
 To study cardinality estimation for more complex queries, queries with up to 6 joins and including additional object constraints were tested. The queries and the detailed results are included in the appendix.
 
@@ -151,7 +152,7 @@ To study cardinality estimation for more complex queries, queries with up to 6 j
 
 <p align="left"> <img src="https://github.com/hongjun7/logs/blob/main/_posts/image/2024-02-10-characteristic-sets/table4.png?raw=true" width="75%"> </p>
 
-##### #3. Other Data Sets
+#### #3. Other Data Sets
 
 <p align="left"> <img src="https://github.com/hongjun7/logs/blob/main/_posts/image/2024-02-10-characteristic-sets/fig8.png?raw=true" width="75%"> </p>
 
@@ -165,7 +166,7 @@ These are the concrete queries used in **Evaluation** and the individual cardina
 
 In some cases, a database system predicted a cardinality of less than one, which makes no sense for non-empty query results. When this happened, the estimates were rounded up to $1$.
 
-##### #1. LibraryThing
+#### #1. LibraryThing
 
 ```csharp
 Q1: select ?s ?t ?y where { ?s <hasTitle> ?t. ?s <hasAuthor> ”Jane Austen”. ?s <inYear> ?y }
@@ -184,7 +185,7 @@ The individual cardinality estimates for the following queries are shown below.
 
 <p align="left"> <img src="https://github.com/hongjun7/logs/blob/main/_posts/image/2024-02-10-characteristic-sets/table5.png?raw=true" width="95%"> </p>
 
-##### #2. Yago
+#### #2. Yago
 
 ```csharp
 Q1: select ?s ?l ?n ?t where { ?s <bornInLocation> ?l. ?s <isCalled> ?n. ?s <type> ?t. }
