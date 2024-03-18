@@ -91,13 +91,37 @@ Existing methods to solve graph data mining problems with RL methods focus on ne
 
 ### Datasets & Open-source
 
-<p align="left"> <img src="https://github.com/hongjun7/logs/blob/main/_posts/image/2024-03-18-RL-on-Graph/table1.png?raw=true" width="80%"> </p>
+<p align="left"> <img src="https://github.com/hongjun7/logs/blob/main/_posts/image/2024-03-18-RL-on-Graph/table1.png?raw=true" width="100%"> </p>
 
-<p align="left"> <img src="https://github.com/hongjun7/logs/blob/main/_posts/image/2024-03-18-RL-on-Graph/table2.png?raw=true" width="80%"> </p>
+<p align="left"> <img src="https://github.com/hongjun7/logs/blob/main/_posts/image/2024-03-18-RL-on-Graph/table2.png?raw=true" width="100%"> </p>
 
 <p align="left"> <img src="https://github.com/hongjun7/logs/blob/main/_posts/image/2024-03-18-RL-on-Graph/table3.png?raw=true" width="50%"> </p>
 
+<p align="left"> <img src="https://github.com/hongjun7/logs/blob/main/_posts/image/2024-03-18-RL-on-Graph/table4.png?raw=true" width="50%"> </p>
+
 ### Graph Mining with Reinforcement Learning
+
+#### Network Representation Learning
+
+Network representation learning is the process of learning a mapping that embeds nodes of a graph as low-dimensional vectors, capturing various structural and semantic information. These methods aim to optimize representations so that geometric relationships in the embedding space preserve the original graph's structure.
+
+The obtained node representations effectively support tasks such as node classification, clustering, link prediction, and graph classification. However, existing methods face challenges such as low feature discrimination, demand for prior knowledge, and low explainability.
+
+To address these challenges, approaches like SUGAR utilize hierarchical learning to retain structural information and achieve discriminative representations. Furthermore, there is increasing interest in Graph Neural Networks (GNNs), with novel techniques focusing on node sampling strategies and message passing mechanisms.
+
+<p align="center"> <img src="https://github.com/hongjun7/logs/blob/main/_posts/image/2024-03-18-RL-on-Graph/fig4.png?raw=true" width="100%"> </p>
+
+Additionally, efforts are being made to improve performance through data augmentation techniques and methods that leverage reinforcement learning for network representation learning. These advancements contribute to enhancing the performance of network representation learning across various real-world networks.
+
+Furthermore, GPA, which aims to improve the learning performance of graph representations, studies how to efficiently label the nodes in GNNs, thereby reducing the annotation cost of training GNNs using an active learning method.
+
+<p align="center"> <img src="https://github.com/hongjun7/logs/blob/main/_posts/image/2024-03-18-RL-on-Graph/fig5.png?raw=true" width="100%"> </p>
+
+<p align="left"> <img src="https://github.com/hongjun7/logs/blob/main/_posts/image/2024-03-18-RL-on-Graph/table5.png?raw=true" width="100%"> </p>
+
+#### Adversarial Attacks
+
+#### Relational Reasoning
 
 ### Real World Applications with Reinforcement Learning on Graphs
 
