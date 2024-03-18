@@ -40,7 +40,7 @@ The basic operation of a GNN can be described as follows:
 
 In this way, a Graph Neural Network effectively infers and predicts node attributes while considering the complexity of the graph structure, serving as a powerful model for various applications within graphs.
 
-### Network Representation Learning
+### Representation Learning
 
 Network Representation Learning, also known as graph embedding or graph representation learning, aims to learn low-dimensional vector representations (embeddings) for nodes in a network such that nodes with similar network neighborhoods are closer together in the embedding space.
 
@@ -85,7 +85,7 @@ Here, $ r_t $ represents the reward received at time step $ t $, and $ \gamma $ 
 
 Recent advancements in RL have led to the development of several state-of-the-art techniques. These include deep reinforcement learning, which involves using deep neural networks to approximate complex decision-making processes, and algorithms like Proximal Policy Optimization (PPO), Trust Region Policy Optimization (TRPO), and Soft Actor-Critic (SAC), which have demonstrated superior performance in various domains such as robotics, gaming, and natural language processing. Additionally, techniques like meta-reinforcement learning, where agents learn to adapt their strategies across different tasks, and model-based reinforcement learning, which leverages learned models of the environment to improve sample efficiency, are also gaining traction in the field. Overall, RL continues to be an active area of research with ongoing advancements and applications in diverse domains.
 
-## Reinforcement Learning on Graphs
+## RL on Graphs
 
 Existing methods to solve graph data mining problems with RL methods focus on network representation learning, adversarial attacks, relational reasoning. In addition, many real-world applications study the GRL problem from different perspectives. 
 
@@ -99,9 +99,9 @@ Existing methods to solve graph data mining problems with RL methods focus on ne
 
 <p align="left"> <img src="https://github.com/hongjun7/logs/blob/main/_posts/image/2024-03-18-RL-on-Graph/table4.png?raw=true" width="50%"> </p>
 
-### Graph Mining with Reinforcement Learning
+### Graph Mining with RL
 
-#### Network Representation Learning
+#### Representation Learning
 
 Network representation learning is the process of learning a mapping that embeds nodes of a graph as low-dimensional vectors, capturing various structural and semantic information. These methods aim to optimize representations so that geometric relationships in the embedding space preserve the original graph's structure.
 
@@ -123,11 +123,11 @@ Furthermore, GPA, which aims to improve the learning performance of graph repres
 
 #### Relational Reasoning
 
-### Real World Applications with Reinforcement Learning on Graphs
+### Real World Applications
 
 ## Collections by domain
 
-### Network Representation Learning
+### Representation Learning
 
 | Year | Venue                             | Model             | Title                                                                                                         | Algorithm                                            | Paper                                                                                                                    | Code                                                                 |
 | ---- | --------------------------------- | ----------------- | ------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------- |
