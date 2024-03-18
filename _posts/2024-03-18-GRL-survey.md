@@ -6,7 +6,7 @@ subtitle: This post provides a comprehensive overview of RL and graph mining met
 
 Recent successes in reinforcement learning (RL) have led to problem-solving across various fields such as robotics, gaming, and natural language processing. RL deals with how agents should learn to take actions to maximize cumulative rewards through interactions with the environment. The rapid advancement of RL has prompted scholars to explore new RL models for real-world applications in domains like finance, healthcare, and transportation. There is active research in data mining for graph structures, as many real-world datasets are represented as graphs. With the continuous development of RL methods in recent years, scholars are increasingly interested in combining graph mining with RL to address decision problems arising in graph mining tasks. Collaborative research on graph mining algorithms and RL models is on the rise, as evidenced by trends in published papers on Graph Reinforcement Learning (GRL) from January 2017 to April 2022.
 
-<p align="center"> <img src="https://github.com/hongjun7/logs/blob/main/_posts/image/2024-03-18-RL-on-Graph/fig1.png?raw=true" width="50%"> </p>
+<p align="center"> <img src="https://github.com/hongjun7/logs/blob/main/_posts/image/2024-03-18-RL-on-Graph/fig1.png?raw=true" width="75%"> </p>
 
 Traditional methods and deep learning-based models for graph mining tasks have significant differences in model design and training processes compared to RL-based methods, posing challenges for scholars in employing RL methods to analyze graph data. Scholars have been extensively researching in the fields of RL and graph mining to address these challenges, with attempts made in various areas such as rumor detection, recommendation systems, and automated machine learning (AutoML). The authors define GRL as solutions and measures for solving graph mining tasks by analyzing critical components such as nodes, links, and subgraphs in graphs with RL methods to explore the topological structure and attribute information of the graphs. A systematic review of this area is deemed necessary, and the authors believe their work represents the first comprehensive survey of various GRL methods.
 
@@ -50,13 +50,13 @@ Let's delve into the details using mathematical expressions:
 
 2. **Objective Function**: Network representation learning typically aims to minimize an objective function that measures the discrepancy between the similarity of nodes in the original graph and their similarity in the embedding space. One common objective function is the pairwise distance between nodes in the embedding space, minimized over all pairs of connected nodes in the graph:
 
-$$
-\begin{align*}
-\text{minimize} \sum_{(i, j) \in E} d(f(v_i), f(v_j))
-\end{align*}
-$$
+    $$
+    \begin{align*}
+    \text{minimize} \sum_{(i, j) \in E} d(f(v_i), f(v_j))
+    \end{align*}
+    $$
 
-Here, $ f(v_i) $ and $ f(v_j) $ represent the embeddings of nodes $ i $ and $ j $, respectively, and $ d(\cdot) $ denotes a distance metric, such as Euclidean distance or cosine similarity.
+    Here, $ f(v_i) $ and $ f(v_j) $ represent the embeddings of nodes $ i $ and $ j $, respectively, and $ d(\cdot) $ denotes a distance metric, such as Euclidean distance or cosine similarity.
 
 3. **Optimization**: The objective function is minimized using optimization algorithms such as stochastic gradient descent (SGD) or its variants. During optimization, the embeddings of nodes are updated iteratively to minimize the objective function.
 
