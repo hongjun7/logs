@@ -73,7 +73,7 @@ Large-scale knowledge graphs like DBpedia, Freebase, and Yago serve as essential
 
 Reinforcement learning (RL) is a type of machine learning where an agent learns to make decisions by interacting with an environment to achieve a goal. The agent receives feedback in the form of rewards or penalties based on its actions, which helps it learn optimal strategies over time.
 
-Mathematically, in RL, the agent learns a policy \( \pi \), which maps states \( s \) to actions \( a \), in order to maximize its cumulative reward \( R \). This is often formulated as finding the optimal policy that maximizes the expected sum of future rewards:
+Mathematically, in RL, the agent learns a policy # \pi $, which maps states # s $ to actions # a $, in order to maximize its cumulative reward # R $. This is often formulated as finding the optimal policy that maximizes the expected sum of future rewards:
 
 $$
 \begin{align*}
@@ -81,7 +81,7 @@ $$
 \end{align*}
 $$
 
-Here, \( r_t \) represents the reward received at time step \( t \), and \( \gamma \) is a discount factor that controls the importance of future rewards.
+Here, # r_t $ represents the reward received at time step # t $, and # \gamma $ is a discount factor that controls the importance of future rewards.
 
 Recent advancements in RL have led to the development of several state-of-the-art techniques. These include deep reinforcement learning, which involves using deep neural networks to approximate complex decision-making processes, and algorithms like Proximal Policy Optimization (PPO), Trust Region Policy Optimization (TRPO), and Soft Actor-Critic (SAC), which have demonstrated superior performance in various domains such as robotics, gaming, and natural language processing. Additionally, techniques like meta-reinforcement learning, where agents learn to adapt their strategies across different tasks, and model-based reinforcement learning, which leverages learned models of the environment to improve sample efficiency, are also gaining traction in the field. Overall, RL continues to be an active area of research with ongoing advancements and applications in diverse domains.
 
