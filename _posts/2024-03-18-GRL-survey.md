@@ -12,7 +12,7 @@ Traditional methods and deep learning-based models for graph mining tasks have s
 
 ## Preliminaries
 
-#### Graph Neural Networks
+### Graph Neural Networks
 
 A Graph Neural Network (GNN) is a deep learning model used to process data represented in graph structures. This model learns relationships between nodes and edges (links) within a graph to perform various tasks within the graph.
 
@@ -40,7 +40,7 @@ The basic operation of a GNN can be described as follows:
 
 In this way, a Graph Neural Network effectively infers and predicts node attributes while considering the complexity of the graph structure, serving as a powerful model for various applications within graphs.
 
-#### Network Representation Learning
+### Network Representation Learning
 
 Network Representation Learning, also known as graph embedding or graph representation learning, aims to learn low-dimensional vector representations (embeddings) for nodes in a network such that nodes with similar network neighborhoods are closer together in the embedding space.
 
@@ -65,11 +65,11 @@ Let's delve into the details using mathematical expressions:
 In summary, Network Representation Learning leverages mathematical formulations to learn low-dimensional vector representations for nodes in a network, aiming to preserve network structure and facilitate downstream network analysis tasks.
 
 
-#### Knowledge Graphs
+### Knowledge Graphs
 
 Large-scale knowledge graphs like DBpedia, Freebase, and Yago serve as essential infrastructure for various AI applications such as recommendation systems and dialogue generation. Knowledge graphs are defined as $G = (h, r, t)$, where $h$ represents the head entity, $t$ denotes the tail entity, and $r$ denotes the relationship between them. Scholars have proposed methods for knowledge graph completion, including knowledge graph embedding and multi-hop path reasoning. These methods fall into three categories: path ranking-based, representation learning-based, and RL-based methods. RL-based methods treat knowledge graph reasoning as Markov Decision Processes (MDP).
 
-#### Reinforcement Learning
+### Reinforcement Learning
 
 Reinforcement learning (RL) is a type of machine learning where an agent learns to make decisions by interacting with an environment to achieve a goal. The agent receives feedback in the form of rewards or penalties based on its actions, which helps it learn optimal strategies over time.
 
@@ -89,7 +89,7 @@ Recent advancements in RL have led to the development of several state-of-the-ar
 
 ## Collections by domain
 
-#### Network Representation Learning
+### Network Representation Learning
 
 | Year | Venue                             | Model             | Title                                                                                                         | Algorithm                                            | Paper                                                                                                                    | Code                                                                 |
 | ---- | --------------------------------- | ----------------- | ------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------- |
@@ -128,7 +128,7 @@ Recent advancements in RL have led to the development of several state-of-the-ar
 | 2023 | Information Sciences              | DeepGNAS          | Search for deep graph neural networks                                                                         | DQN                                                  | [Paper](https://www.sciencedirect.com/science/article/pii/S0020025523012021)                                                |                                                                      |
 | 2023 | MLSys                             | X-RLflow          | X-RLflow: Graph Reinforcement Learning for Neural Network Subgraphs Transformation                            | PPO                                                  | [Paper](https://proceedings.mlsys.org/paper_files/paper/2023/hash/f89b79c9a28d4cae22ef9e557d9fa191-Abstract-mlsys2023.html) | [Code](https://github.com/ucamrl/xrlflow)                               |
 
-#### Adversarial Attacks
+### Adversarial Attacks
 
 | Year | Venue                             | Model          | Title                                                                                                            | Algorithm  | Paper                                                                | Code                                         |
 | ---- | --------------------------------- | -------------- | ---------------------------------------------------------------------------------------------------------------- | ---------- | -------------------------------------------------------------------- | -------------------------------------------- |
@@ -143,7 +143,7 @@ Recent advancements in RL have led to the development of several state-of-the-ar
 | 2022 | IEEE TKDE                         | RL-GraphMI     | Model Inversion Attacks Against Graph Neural Networks                                                            | Q-Learning | [Paper](https://ieeexplore.ieee.org/abstract/document/9895303)          | [Code](https://github.com/zaixizhang/GraphMI)   |
 | 2023 | IJCNN                             | AdRumor-RL     | Interpretable and Effective Reinforcement Learning for Attacking against Graph-based Rumor Detection             | MDP        | [Paper](https://ieeexplore.ieee.org/abstract/document/10191290)         |                                              |
 
-#### Relational Reasoning
+### Relational Reasoning
 
 | Year | Venue                                                                               | Model        | Title                                                                                                                                             | Algorithm    | Paper                                                                                                                                                                                           | Code                                                                                                        |
 | ---- | ----------------------------------------------------------------------------------- | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
@@ -212,9 +212,9 @@ Recent advancements in RL have led to the development of several state-of-the-ar
 | 2023 | Applied Intelligence                                                                | RED          | Reinforcement learning-based denoising network for sequential recommendation                                                                      | MDP          | [Paper](https://link.springer.com/article/10.1007/s10489-022-03298-6)                                                                                                                              |                                                                                                             |
 | 2023 | Conference of the European Chapter of the Association for Computational Linguistics | Jiang et al. | Path Spuriousness-aware Reinforcement Learning for Multi-Hop Knowledge Graph Reasoning                                                            | REINFORCE    | [Paper](https://aclanthology.org/2023.eacl-main.232/)                                                                                                                                              | [Code](https://github.com/rubickkcibur/PSAgent)                                                                |
 
-#### Real-World Applications
+### Real-World Applications
 
-##### Explainability
+#### Explainability
 
 | Year | Venue      | Model         | Title                                                                           | Algorithm  | Paper                                                                                                                                                                | Code                                                         |
 | ---- | ---------- | ------------- | ------------------------------------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------ |
@@ -230,7 +230,7 @@ Recent advancements in RL have led to the development of several state-of-the-ar
 | 2022 | ADC        | Mishra et al. | Predicting Taxi Hotspots in Dynamic Conditions Using Graph Neural Network       | MDP        | [Paper](https://link.springer.com/chapter/10.1007/978-3-031-15512-3_7)                                                                                                  |                                                              |
 | 2022 | CIKM       | Saha et al.   | A Model-Centric Explainer for Graph Neural Network based Node Classification    | REINFORCE  | [Paper](https://dl.acm.org/doi/abs/10.1145/3511808.3557535)                                                                                                             | [Code](https://github.com/KingGuzman/Node-Classifier-Explainer) |
 
-##### City Services
+#### City Services
 
 | Year | Venue                                                            | Model            | Title                                                                                                                                                | Algorithm        | Paper                                                                                                                                                                                                                                                                                                                                                                          | Code                                                       |
 | ---- | ---------------------------------------------------------------- | ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------- |
@@ -270,7 +270,7 @@ Recent advancements in RL have led to the development of several state-of-the-ar
 | 2022 | arXiv                                                            | MuJAM            | Model-based graph reinforcement learning for inductive traffic signal control                                                                        | MDP              | [Paper](https://arxiv.org/pdf/2208.00659.pdf)                                                                                                                                                                                                                                                                                                                                     |                                                            |
 | 2023 | IET Gener. Transm. Distrib.                                      | GraphSAGE-D3QN   | An emergency control strategy for undervoltage load shedding of power system: A graph deep reinforcement learning method                             | D3QN             | [Paper](https://ietresearch.onlinelibrary.wiley.com/doi/full/10.1049/gtd2.12795)                                                                                                                                                                                                                                                                                                  |                                                            |
 
-##### Epidemic Control
+#### Epidemic Control
 
 | Year | Venue                                             | Model   | Title                                                                                                             | Algorithm  | Paper                                                       | Code                                        |
 | ---- | ------------------------------------------------- | ------- | ----------------------------------------------------------------------------------------------------------------- | ---------- | ----------------------------------------------------------- | ------------------------------------------- |
@@ -282,7 +282,7 @@ Recent advancements in RL have led to the development of several state-of-the-ar
 | 2022 | ACM Transactions on Knowledge Discovery from Data | IDRLECA | Contact Tracing and Epidemic Intervention via Deep Reinforcement Learning                                         | PPO        | [Paper](https://dl.acm.org/doi/abs/10.1145/3546870)            |                                             |
 | 2022 | KDD                                               | Vehicle | Precise Mobility Intervention for Epidemic Control Using Unobservable Information via Deep Reinforcement Learning | HRL        | [Paper](https://dl.acm.org/doi/abs/10.1145/3534678.3539195)    |                                             |
 
-##### Combinatorial Optimization
+#### Combinatorial Optimization
 
 | Year | Venue                                               | Model        | Title                                                                                                                                       | Algorithm  | Paper                                                                                                                                                                      | Code                                                   |
 | ---- | --------------------------------------------------- | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------ |
@@ -308,7 +308,7 @@ Recent advancements in RL have led to the development of several state-of-the-ar
 | 2023 | Knowledge-Based Systems                             | DeepMAG      | DeepMAG: Deep reinforcement learning with multi-agent graphs for flexible job shop scheduling                                               | MARL       | [Paper](https://www.sciencedirect.com/science/article/abs/pii/S0950705122011790)                                                                                              |                                                        |
 | 2023 | Information Sciences                                | BDRL         | Solving combinatorial optimization problems over graphs with BERT-Based Deep Reinforcement Learning                                         | REINFORCE  | [Paper](https://www.sciencedirect.com/science/article/pii/S0020025522013627#s0025)                                                                                            |                                                        |
 
-##### Medicine
+#### Medicine
 
 | Year | Venue                               | Model           | Title                                                                                                                                                                  | Algorithm    | Paper                                                                                            | Code                                                   |
 | ---- | ----------------------------------- | --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ | ------------------------------------------------------------------------------------------------ | ------------------------------------------------------ |
@@ -322,7 +322,7 @@ Recent advancements in RL have led to the development of several state-of-the-ar
 | 2022 | arXiv                               | BN-GNN          | Deep Reinforcement Learning Guided Graph Neural Networks for Brain Network Analysis                                                                                    | DDQN         | [Paper](https://arxiv.org/abs/2203.10093)                                                           |                                                        |
 | 2023 | Aiche Journal                       | Stops et al.    | Flowsheet generation through hierarchical reinforcement learning and graph neural networks                                                                             | Actor-Critic | [Paper](https://aiche.onlinelibrary.wiley.com/doi/full/10.1002/aic.17938)                           |                                                        |
 
-#### Others
+### Others
 
 | Year | Venue                                                                      | Model              | Title                                                                                                          | Algorithm                                        | Paper                                                                                                                                    | Code                                         |
 | ---- | -------------------------------------------------------------------------- | ------------------ | -------------------------------------------------------------------------------------------------------------- | ------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------- |
