@@ -119,11 +119,42 @@ Furthermore, GPA, which aims to improve the learning performance of graph repres
 
 <p align="left"> <img src="https://github.com/hongjun7/logs/blob/main/_posts/image/2024-03-18-RL-on-Graph/table5.png?raw=true" width="100%"> </p>
 
-#### Adversarial Attacks
-
 #### Relational Reasoning
 
+Discovering and understanding causal mechanisms involves searching for Directed Acyclic Graphs (DAGs) that minimize defined score functions. While reinforcement learning (RL) methods have shown promising results in causal discovery from observed data, navigating the space of DAGs or uncovering implied conditions presents significant complexity.
+
+RL agents with random policies can autonomously define search policies based on learned uncertain information, rapidly updating them with reward signals. [Zhu et al.](https://arxiv.org/abs/1906.04477.pdf) propose leveraging RL to find underlying DAGs without relying on smooth score functions. Their algorithm employs Actor-Critic as the search algorithm and outputs the graph with the best reward among all generated during training.
+
+However, computational challenges arise with this method, and exploring the action space comprising directed graphs is commonly difficult. [Wang et al.](https://arxiv.org/pdf/2105.06631.pdf) introduce the CORL method, incorporating RL into the ordering-based paradigm. They describe the ordering search problem as a multi-step MDP and implement the ordering generation process using encoder-decoder structures. [Sun et al.](https://ieeexplore.ieee.org/document/9540989) combine transfer learning and RL for co-learning to leverage prior causal knowledge for causal reasoning tasks.
+
+Task-oriented Spoken Dialogue Systems (SDS) continuously interact with humans to accomplish predefined tasks. [Chen et al.](https://aclanthology.org/C18-1107.pdf) propose an alternative method incorporating the DQN algorithm to innovate neural network structures for dialogue policy adaptation. Additionally, natural question generation models are proposed to enhance Q&A task performance. [Chen et al.](https://arxiv.org/pdf/1908.04942.pdf) focus on natural question generation, introducing a RL-based Graph-to-Sequence (Graph2Seq) model employing the self-critical sequence training (SCST) algorithm to optimize evaluation metrics directly.
+
+Explicitly obtaining user preferences for recommended items and attributes through interactive conversations is the goal of conversational recommender systems. [Deng et al.](https://arxiv.org/pdf/2105.09710.pdf) leverage a graph structure to integrate recommendation and conversation components. They use a dynamic weighted graph to model changing interrelationships during conversations and consider a graph-based MDP environment for simultaneous relationship processing.
+
+With the rise of artificial intelligence, knowledge graphs have become crucial data infrastructure for various real-world applications, including dialogue systems and knowledge reasoning. [Lin et al.](https://arxiv.org/pdf/1808.10568.pdf) propose a policy-based agent for multi-hop reasoning tasks through RL approaches. MINERVA utilizes RL to train end-to-end models for answering questions on multi-hop knowledge graphs.
+
+To address incomplete knowledge graph problems, scholars commonly employ multi-hop reasoning. [Wan et al.](https://www.ijcai.org/proceedings/2020/0267.pdf) suggest a hierarchical RL method to simulate human thinking patterns, decomposing the reasoning process into RL policies. Recommendation systems, critical to online applications, incorporate DRL models like DQN and DDPG for decision-making and long-term planning in dynamic environments. KGQR integrates graph learning and sequential decision problems in interactive recommender systems, enhancing RL performance through semantic correlations in knowledge graphs.
+
+<p align="left"> <img src="https://github.com/hongjun7/logs/blob/main/_posts/image/2024-03-18-RL-on-Graph/table7.png?raw=true" width="100%"> </p>
+
 ### Real World Applications
+
+Research on Graph Representation Learning (GRL) has surged in recent years, with significant implications for real-world applications and garnering attention from scholars. Applications span various domains including transportation network optimization, E-commerce recommendation systems, drug structure prediction, molecular structure generation, and COVID-19 control strategies. Notable advancements in GRL methods are outlined below:
+
+1) **Explainability:** Scholars are focusing on enhancing the interpretability of Graph Neural Networks (GNNs) to enable their use in critical applications such as medicine, privacy, and security. Explaining GNNs at both the instance and model levels is crucial for building trust. Methods like SubgraphX and RioGNN offer explanations at the subgraph level, enhancing the interpretability of multi-relational GNNs.
+
+2) **City Services:** GRL methods aid in addressing urban challenges like traffic congestion and communication inefficiency. Techniques such as traffic flow prediction, traffic signal control, and electronic toll collection optimization optimize city services. GRL also enhances packet switching network routing and Wireless Local Area Networks (WLANs) channel allocation.
+
+3) **Epidemic Control:** In controlling epidemics, GRL plays a pivotal role in predicting information diffusion, dynamically allocating resources, and identifying key nodes for intervention. Algorithms like RAI assist in curbing virus spread by leveraging social relationships in the Internet of Things (IoT).
+
+4) **Combinatorial Optimization:** GRL methods are employed in solving combinatorial optimization problems efficiently. OpenGraphGym and S2V-DQN tackle combinatorial graph optimization, while Action Schema Network learns generalized policies for probabilistic planning problems.
+    <p align="left"> <img src="https://github.com/hongjun7/logs/blob/main/_posts/image/2024-03-18-RL-on-Graph/fig9.png?raw=true" width="100%"> </p>
+
+5) **Medicine:** GRL techniques find applications in Clinical Decision Support (CDS), Medicine Combination Prediction (MCP), chemical reaction product prediction, and brain network analysis. Models like Graph Convolution RL and Graph Transformation Policy Network aid in medicine correlation prediction and chemical molecule generation, contributing to drug discovery research. 
+
+These applications underscore the versatility and impact of GRL across diverse fields, paving the way for innovative solutions to complex real-world challenges.
+
+<p align="left"> <img src="https://github.com/hongjun7/logs/blob/main/_posts/image/2024-03-18-RL-on-Graph/table8.png?raw=true" width="100%"> </p>
 
 ## Collections by domain
 
@@ -383,4 +414,11 @@ Furthermore, GPA, which aims to improve the learning performance of graph repres
 ## Reference
 
 - [M. Nie, D. Chen and D. Wang, &#34;Reinforcement Learning on Graphs: A Survey,&#34; in IEEE Transactions on Emerging Topics in Computational Intelligence, vol. 7, no. 4, pp. 1065-1082, Aug. 2023, doi: 10.1109/TETCI.2022.3222545.](https://arxiv.org/pdf/2204.06127.pdf)
-- [github.com/neunms/Reinforcement-learning-on-graphs-A-survey](https://github.com/neunms/Reinforcement-learning-on-graphs-A-survey)
+- [S. Zhu, I. Ng, and Z. Chen, “Causal discovery with reinforcement learning,” arXiv preprint arXiv:1906.04477, 2019.](https://arxiv.org/abs/1906.04477.pdf)
+- [X. Wang, Y. Du, S. Zhu, L. Ke, Z. Chen, J. Hao, and J. Wang, “Ordering-based causal discovery with reinforcement learning,” arXiv preprint arXiv:2105.06631, 2021.](https://arxiv.org/pdf/2105.06631.pdf)
+- [Y. Sun, K. Zhang, and C. Sun, “Model-based transfer reinforcement learning based on graphical model representations,” IEEE Transactions on Neural Networks and Learning Systems, pp. 1–14, 2021](https://ieeexplore.ieee.org/document/9540989)
+- [L. Chen, B. Tan, S. Long, and K. Yu, “Structured dialogue policy with graph neural networks,” in Proceedings of the 27th International Conference on Computational Linguistics, Santa Fe, New Mexico, USA, 2018, pp. 1257–1268.](https://aclanthology.org/C18-1107.pdf)
+- [Y. Chen, L. Wu, and M. J. Zaki, “Reinforcement learning based graphto-sequence model for natural question generation,” arXiv preprint arXiv:1908.04942, 2019.](https://arxiv.org/pdf/1908.04942.pdf)
+- [Y. Deng, Y. Li, F. Sun, B. Ding, and W. Lam, “Unified conversational recommendation policy learning via graph-based reinforcement learning,” in Proceedings of the 44th International ACM SIGIR Conference on Research and Development in Information Retrieval, 2021, pp. 1431–1441.](https://arxiv.org/pdf/2105.09710.pdf)
+- [X. V. Lin, R. Socher, and C. Xiong, “Multi-hop knowledge graph reasoning with reward shaping,” in Proceedings of the 2018 Conference on Empirical Methods in Natural Language Processing, Brussels, Belgium, 2018, pp. 3243–3253.](https://arxiv.org/pdf/1808.10568.pdf)
+- [G. Wan, S. Pan, C. Gong, C. Zhou, and G. Haffari, “Reasoning like human: Hierarchical reinforcement learning for knowledge graph reasoning,” in Proceedings of the Twenty-Ninth International Joint Conference on Artificial Intelligence, Yokohama, Yokohama, Japan, 2021, pp. 1926–1932.](https://www.ijcai.org/proceedings/2020/0267.pdf)
