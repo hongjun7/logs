@@ -148,7 +148,8 @@ Research on Graph Representation Learning (GRL) has surged in recent years, with
 3) **Epidemic Control:** In controlling epidemics, GRL plays a pivotal role in predicting information diffusion, dynamically allocating resources, and identifying key nodes for intervention. Algorithms like RAI assist in curbing virus spread by leveraging social relationships in the Internet of Things (IoT).
 
 4) **Combinatorial Optimization:** GRL methods are employed in solving combinatorial optimization problems efficiently. OpenGraphGym and S2V-DQN tackle combinatorial graph optimization, while Action Schema Network learns generalized policies for probabilistic planning problems.
-    <p align="left"> <img src="https://github.com/hongjun7/logs/blob/main/_posts/image/2024-03-18-RL-on-Graph/fig9.png?raw=true" width="100%"> </p>
+
+<p align="left"> <img src="https://github.com/hongjun7/logs/blob/main/_posts/image/2024-03-18-RL-on-Graph/fig9.png?raw=true" width="100%"> </p>
 
 5) **Medicine:** GRL techniques find applications in Clinical Decision Support (CDS), Medicine Combination Prediction (MCP), chemical reaction product prediction, and brain network analysis. Models like Graph Convolution RL and Graph Transformation Policy Network aid in medicine correlation prediction and chemical molecule generation, contributing to drug discovery research. 
 
