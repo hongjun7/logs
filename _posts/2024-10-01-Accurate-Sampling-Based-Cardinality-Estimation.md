@@ -15,7 +15,7 @@ Let's consider the following SPARQL query.
 
 <p align="center"> <img src="https://github.com/hongjun7/logs/blob/main/_posts/image/2024-10-01-Accurate-Sampling-Based-Cardinality-Estimation/query1.png?raw=true" width="100%"> </p>
 
-The nested DISTINCT operators were intended to reduce bindings for the $?mounting$ and $?motor$ variables, improving query efficiency. However, the RDF system had difficulty creating an efficient query plan due to inaccurate cardinality estimates for the **UNION** and **DISTINCT** subqueries, as well as their joins.
+The nested **DISTINCT** operators were intended to reduce bindings for the $?mounting$ and $?motor$ variables, improving query efficiency. However, the RDF system had difficulty creating an efficient query plan due to inaccurate cardinality estimates for the **UNION** and **DISTINCT** subqueries, as well as their joins.
 
 In summary, there are following challenges:
 
@@ -30,7 +30,13 @@ Existing methods struggle with such complexities and may produce slow or inaccur
 
 ### Principles of Sampling-based Cardinality Estimation
 
-Most of sampling-based cardinality estimation methods can be viewed as variations of a [method introduced by Lipton and Naughton](ttps://dl.acm.org/doi/pdf/10.1145/298514.298540). The approach involves partitioning the set of query results $A$ from a database $I$ into disjoint subsets $A_1, A_2, ... , A_n$, allowing for efficient calculation of the size of each subset. By randomly selecting one subset and using its size to estimate the total cardinality, an unbiased estimate is obtained.
+Most of sampling-based cardinality estimation methods can be viewed as variations of a [method introduced by Lipton and Naughton](ttps://dl.acm.org/doi/pdf/10.1145/298514.298540).
+
+The approach involves partitioning the set of query results $ A $ from a database $ I $ into disjoint subsets $ A_1, A_2, ... , A_n $, allowing for efficient calculation of the size of each subset. By randomly selecting one subset and using its size to estimate the total cardinality( $ n \lvert A_i \rvert $ ), an unbiased estimate is obtained because $ A_1, ... , A_n $ are disjoint.
+
+$$
+( \sum_{i=1}^{n} n \lvert A_i \rvert )/n = \sum_{i=1}^{n} \lvert A_i \rvert = \lvert A \rvert
+$$
 
 The method is adaptable to various query types, including recursive path and datalog queries.  Moreover, estimation accuracy can be improved by computing the average of several samples, and a key question is how many samples should be taken. For certain classes of queries, it is possible to precompute the number of samples so the resulting estimate is within desired bounds. Alternatively, one can keep taking samples until the estimate falls within a confidence interval computed.
 
@@ -73,15 +79,34 @@ Consider queries $Q_1$, $Q_2$ and a database instance $I$ as follows.
 
 <p align="center"> <img src="https://github.com/hongjun7/logs/blob/main/_posts/image/2024-10-01-Accurate-Sampling-Based-Cardinality-Estimation/query2.png?raw=true" width="100%"> </p>
 
-There are two main issues:
+To apply the approach from the method proposed by Lipton and Naughton, we could partition $ I $ into $ I_i = \lbrace R(a, b_i), S(b_i, c) \rbrace $ for $ 1 ≤ i ≤ k $; cleary, $ ans_{I}(Q) = \bigcup_{i=1}^{k} ans_{I_i}(Q_2) $, as required. To estimate the cardinality of $ Q_2 $ in $ I $, we randomly choose $ i ∈ {1, ..., k} $ and return $ k \lvert ans_{I_i}(Q_2) \rvert $ as the estimate. Since $ I_i $ is much smaller than $ I $, computing $ \lvert ans_{I_i}(Q_2) \rvert $ is likely to be much faster than computing $ \lvert ans_{I}(Q_2) \rvert $.
+
+Duplicate elimination reduces the number of answers in a way that can prevent effective partitioning. Indeed, $ ans_{I}(Q) ≠ \bigcup_{i=1}^{k} ans_{I_i}(Q_2) $, so the partitioning from the previous paragraph is not applicable. In fact, it is unclear how to partition $ I $ into $ I_1, ... , I_n $ so $ ans_{Q_1}(I) = \bigcup_{i=1}^{n} ans_{Q_1}(I_i) $ holds but computing $ \lvert ans_{I_i}(Q_2) \rvert $ is much faster than computing $ \lvert ans_I(Q_2) \rvert $.
+
+The approach in the next chapter addresses these problems. In particular, it can process query $ Q_1 $ efficiently, and it is applicable even if $ Q_1 $ is conjoined with another query.
+
+Overall there are two main issues:
 
 - Existing methods cannot handle complex queries with arbitrary operator nesting
 - Partitioning techniques struggle with duplicate elimination
 
-
 ## Strongly Consistent Cardinality Estimator for Complex Queries
 
+This chapter explains the cardinality estimation approach by outlining the query evaluation, underlying intuitions, the basic algorithm with its optimisation, and practical considerations.
+
 ### Query Evaluation via Sideways Information Passing
+
+Standard query evaluation typically proceeds in a bottom-up manner. For instance, when evaluating a query such as $ Q = Q_1 $ AND $ Q_2 $, the results of $ Q_1 $ and $ Q_2 $ are computed individually before joining the two results.
+
+However, this process can be optimised using a technique known as ***sideway information passing***. This technique allows one operator in a query plan to pass potential variable bindings to other operators, enabling them to eliminate irrelevant tuples early on. By doing so, the evaluation becomes more efficient without needing to fully compute the entire result set. Such techniques have been applied to various types of queries, including relational, RDF, recursive, and visual query processing.
+
+In particular, the procedure evalI(Q, σ) uses a variant of sideways information passing to evaluate a query $ Q $ over a database instance $ I $. While this algorithm can be practical, the paper's main point is conceptual: the cardinality estimation algorithm can be seen as "sampling the loops" of evalI. Essentially, the algorithm functions similarly to the magic sets transformation but is adapted for more complex, nested queries. For example, when evaluating $ Q = Q_1 $ AND $ Q_2 $, the algorithm enumerates all the answers for $ Q_1 $ and then evaluates $ Q_2 $ in the context of each answer.
+
+The algorithm facilitates sideways information passing through the substitution $ σ $, which provides context for subqueries that are evaluated prior to $ Q $. Only answers compatible with this context substitution are produced. The algorithm is presented as a generator, where each invocation of $eval_{I}(Q, σ)$ provides an iterator, and the output keyword adds one substitution to the iterator result. Additionally, the algorithm is structured to process one tuple at a time, which, while potentially incurring random access costs, can be offset by the benefits of sideways information passing, especially in RAM-based databases.
+
+This sideways information passing significantly reduces the number of tuples processed and ensures the evaluation is efficient, even for complex queries. The algorithm also incorporates optimisation techniques like nested loop joins, duplicate removal, and minimisation strategies to handle a wide range of query types.
+
+The paper demonstrates that the algorithm is practical in specific cases and that its prototype implementation effectively evaluates queries with these optimisations in place.
 
 <p align="center"> <img src="https://github.com/hongjun7/logs/blob/main/_posts/image/2024-10-01-Accurate-Sampling-Based-Cardinality-Estimation/alg1.png?raw=true" width="100%"> </p>
 
@@ -101,7 +126,7 @@ There are two main issues:
 
 <p align="center"> <img src="https://github.com/hongjun7/logs/blob/main/_posts/image/2024-10-01-Accurate-Sampling-Based-Cardinality-Estimation/alg5.png?raw=true" width="100%"> </p>
 
-### Integrating Cardinality Estimation into Query Planning
+## Integrating Cardinality Estimation into Query Planning
 
 ## Reference
 
