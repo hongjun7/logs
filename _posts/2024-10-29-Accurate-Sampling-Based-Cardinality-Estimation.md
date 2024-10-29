@@ -1,5 +1,5 @@
 ---
-title: "(WIP) Accurate Sampling-Based Cardinality Estimation for Complex Graph Queries"
+title: "Accurate Sampling-Based Cardinality Estimation for Complex Graph Queries"
 tags: query cardinality estimation
 subtitle: This post provides a novel, strongly consistent method for accurately and efficiently estimating the cardinality of complex graph queries.
 ---
@@ -13,7 +13,7 @@ This post explores a novel approach inspired by WanderJoin that can effectively 
 
 Let's consider the following SPARQL query.
 
-<p align="center"> <img src="https://github.com/hongjun7/logs/blob/main/_posts/image/2024-10-01-Accurate-Sampling-Based-Cardinality-Estimation/query1.png?raw=true" width="100%"> </p>
+<p align="center"> <img src="https://github.com/hongjun7/logs/blob/main/_posts/image/2024-10-29-Accurate-Sampling-Based-Cardinality-Estimation/query1.png?raw=true" width="100%"> </p>
 
 The nested **DISTINCT** operators were intended to reduce bindings for the $?mounting$ and $?motor$ variables, improving query efficiency. However, the RDF system had difficulty creating an efficient query plan due to inaccurate cardinality estimates for the **UNION** and **DISTINCT** subqueries, as well as their joins.
 
@@ -22,7 +22,7 @@ In summary, there are following challenges:
 - Queries often involve multiple joins and self-joins.
 - Data distributions can be skewed, leading to inaccurate or zero estimates.
 - Cardinality estimation needs to account for complex graph operations like union, projection, and duplicate elimination. Here is the syntax and the semantics of the SPARQL.
-  <p align="center"> <img src="https://github.com/hongjun7/logs/blob/main/_posts/image/2024-10-01-Accurate-Sampling-Based-Cardinality-Estimation/tab1.png?raw=true" width="100%"> </p>
+  <p align="center"> <img src="https://github.com/hongjun7/logs/blob/main/_posts/image/2024-10-29-Accurate-Sampling-Based-Cardinality-Estimation/tab1.png?raw=true" width="100%"> </p>
 
 Existing methods struggle with such complexities and may produce slow or inaccurate results on larger datasets.
 
@@ -77,7 +77,7 @@ The G-CARE framework's cardinality estimation algorithms, as described by [Park 
 
 Consider queries $Q_1$, $Q_2$ and a database instance $I$ as follows.
 
-<p align="center"> <img src="https://github.com/hongjun7/logs/blob/main/_posts/image/2024-10-01-Accurate-Sampling-Based-Cardinality-Estimation/query2.png?raw=true" width="100%"> </p>
+<p align="center"> <img src="https://github.com/hongjun7/logs/blob/main/_posts/image/2024-10-29-Accurate-Sampling-Based-Cardinality-Estimation/query2.png?raw=true" width="100%"> </p>
 
 To apply the approach from the method proposed by Lipton and Naughton, we could partition $ I $ into $ I_i = \lbrace R(a, b_i), S(b_i, c) \rbrace $ for $ 1 ≤ i ≤ k $; cleary, $ ans_{I}(Q) = \bigcup_{i=1}^{k} ans_{I_i}(Q_2) $, as required. To estimate the cardinality of $ Q_2 $ in $ I $, we randomly choose $ i ∈ {1, ..., k} $ and return $ k \lvert ans_{I_i}(Q_2) \rvert $ as the estimate. Since $ I_i $ is much smaller than $ I $, computing $ \lvert ans_{I_i}(Q_2) \rvert $ is likely to be much faster than computing $ \lvert ans_{I}(Q_2) \rvert $.
 
@@ -108,25 +108,59 @@ This sideways information passing significantly reduces the number of tuples pro
 
 The paper demonstrates that the algorithm is practical in specific cases and that its prototype implementation effectively evaluates queries with these optimisations in place.
 
-<p align="center"> <img src="https://github.com/hongjun7/logs/blob/main/_posts/image/2024-10-01-Accurate-Sampling-Based-Cardinality-Estimation/alg1.png?raw=true" width="100%"> </p>
+<p align="center"> <img src="https://github.com/hongjun7/logs/blob/main/_posts/image/2024-10-29-Accurate-Sampling-Based-Cardinality-Estimation/alg1.png?raw=true" width="100%"> </p>
 
 ### Principles for Estimating the Cardinality of Complex Queries
 
+The WanderJoin algorithm proposes an optimization technique called "sampling the loops" which, unlike traditional algorithms that iterate over all matcher combinations, selects just one pair of matchers to generate an answer. This selective process leverages sideways information passing, significantly reducing the complexity required to approximate the full result set of a query. Several examples illustrate WanderJoin's versatility across query types, such as UNION, MINUS, and DISTINCT, where partial sampling provides unbiased estimates.
+
+For instance, in **UNION** queries, sampling a single matcher and its candidate count yields an unbiased result, with repeated runs converging toward the actual cardinality.
+
+In **MINUS** queries, only valid matches are selected, enhancing accuracy.
+
+With **DISTINCT** queries, the algorithm avoids duplicates by choosing unique matches within unions, thereby minimizing estimation bias.
+
+This approach effectively reduces variance by averaging over multiple sampling runs, ultimately converging on highly accurate cardinality estimates. Notably, it achieves efficient and reliable results without exhaustive data examination.
+
 ### The Basic Cardinality Estimation Approach
 
-<p align="center"> <img src="https://github.com/hongjun7/logs/blob/main/_posts/image/2024-10-01-Accurate-Sampling-Based-Cardinality-Estimation/alg2.png?raw=true" width="100%"> </p>
+**Algorithm 2** is designed to estimate the cardinality of query results by leveraging a sampling-based method. Taking as inputs a database instance, a query, and a context substitution, the algorithm returns a structured triple [ω, β, c] representing sampled outcomes, a substitution satisfying the query conditions, and a cardinality estimate. In cases where no answer is found, the algorithm signals failure. This process incorporates loop sampling, enabling random selections from a sample space optimised via fixed probability distributions.
+
+<p align="center"> <img src="https://github.com/hongjun7/logs/blob/main/_posts/image/2024-10-29-Accurate-Sampling-Based-Cardinality-Estimation/alg2.png?raw=true" width="100%"> </p>
+
+For **DISTINCT** queries, the algorithm maintains a global mapping of substitutions to ensure unique outcomes, mirroring the structure of a Horvitz–Thompson estimator. The approach is unbiased and consistent, allowing conjunctions, disjunctions, and filters to be managed through recursive calls that account for both successful estimates and failures. The algorithm’s general structure can be extended to graph query languages and aggregation functions, though certain complex queries, like nested aggregations, may present additional challenges. Further refinements are planned to incorporate more advanced query forms, such as Conjunctive Regular Path Queries (CRPQs).
 
 ### Optimising the Basic Approach
 
-<p align="center"> <img src="https://github.com/hongjun7/logs/blob/main/_posts/image/2024-10-01-Accurate-Sampling-Based-Cardinality-Estimation/alg3.png?raw=true" width="100%"> </p>
+There is an improved version of **Algorithm 2** that reduces variance and computation time by refining the sampling process. Instead of maintaining Horvitz–Thompson estimations for all calls, the new approach uses unbiased but simplified estimates, especially for **UNION** and conjunctive queries. By sampling without replacement in certain cases, it achieves broader sample coverage and lower estimator variance. **Algorithm 3** aggregates independent estimates for query components, offering faster, more consistent cardinality estimates while retaining accuracy for various query structures.
+
+<p align="center"> <img src="https://github.com/hongjun7/logs/blob/main/_posts/image/2024-10-29-Accurate-Sampling-Based-Cardinality-Estimation/alg3.png?raw=true" width="100%"> </p>
 
 ### Practical Considerations
 
-<p align="center"> <img src="https://github.com/hongjun7/logs/blob/main/_posts/image/2024-10-01-Accurate-Sampling-Based-Cardinality-Estimation/alg4.png?raw=true" width="100%"> </p>
+There are key optimisations to make **Algorithm 2** and **Algorithm 3** more practical:
 
-<p align="center"> <img src="https://github.com/hongjun7/logs/blob/main/_posts/image/2024-10-01-Accurate-Sampling-Based-Cardinality-Estimation/alg5.png?raw=true" width="100%"> </p>
+1. **Order Enumeration:** Determining an optimal order for atoms in a conjunction (e.g., **AND** clauses) can reduce variance. Rather than testing all permutations, only select a subset where the choice of the first atom significantly impacts the estimation, reducing computational effort for cases like star queries.
+
+2. **Single Order Selection:** To further decrease variance, **Algorithm 4** uses simple data statistics to order atoms by minimising sample space choices. Although this ordering can be imprecise, Algorithms 2 and 3 compensate with accurate cardinality estimates.
+
+3. **Dynamic Stopping Condition:** To avoid excessive runs, a dynamic stopping criterion adjusts based on variance and q-error targets, ensuring an efficient yet reliable number of runs for cardinality estimation.
+
+4. **Partitioned Sample Space:** Sample space is partitioned into fixed-size blocks to better capture relevant data without excessive computation, particularly in complex queries.
+
+5. **Combining Algorithms:** For complex queries that return zero estimates, a fallback from **Algorithm 2** to the optimised **Algorithm 3** ensures more accurate results without overloading simpler queries.
+
+6. **Dependency-Directed Backtracking:** When an atom fails to match, the algorithm backtracks to earlier matches that determined variable bindings, avoiding redundant searches and enhancing efficiency in complex joins.
+
+<p align="center"> <img src="https://github.com/hongjun7/logs/blob/main/_posts/image/2024-10-29-Accurate-Sampling-Based-Cardinality-Estimation/alg4.png?raw=true" width="100%"> </p>
 
 ## Integrating Cardinality Estimation into Query Planning
+
+Accurate cardinality estimates can greatly enhance query performance, particularly for complex queries. **Algorithm 5** introduces a dynamic programming-based query planner that builds efficient query orders by minimising costly cross-products and reducing unnecessary substitutions.
+
+It evaluates each atom’s placement within a query to identify the order with the lowest cumulative cost based on cardinality estimates. This approach dynamically selects the most efficient order at each stage, significantly reducing query evaluation times while adding only minimal overhead. Experimental results confirm that this planner produces more optimised query plans, showcasing the value of data-informed orderings in streamlining query processing.
+
+<p align="center"> <img src="https://github.com/hongjun7/logs/blob/main/_posts/image/2024-10-29-Accurate-Sampling-Based-Cardinality-Estimation/alg5.png?raw=true" width="100%"> </p>
 
 ## Reference
 
