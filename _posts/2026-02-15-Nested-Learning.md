@@ -340,6 +340,7 @@ $$
 typically arranged as a spectrum $f_1 \ge f_2 \ge \dots \ge f_K$.
 
 Define slow learning (training-time consolidation):
+
 $$
 \begin{align*}
 θ &\leftarrow θ - \eta_θ \nabla_θ \sum_{t=1}^{T}\ell_t, \\
@@ -384,7 +385,13 @@ s_j(q) &= \frac{\langle q, k_j\rangle}{\sqrt{d_k}} \\
 $$
 
 ### A.2 SGD / Momentum / Adam
-Let $g_t=\nabla_θ \ell_t(θ)$.
+Let
+
+$$
+g_t=\nabla_θ \ell_t(θ)
+$$
+
+Then,
 
 $$
 \begin{align*}
