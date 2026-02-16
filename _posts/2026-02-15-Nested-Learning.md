@@ -6,7 +6,7 @@ subtitle: This post introduces a new learning paradigm, Nested Learning (NL), wh
 
 This post introduces Nested Learning as a paradigm for continual learning, drawing on a [Google Research blog post](https://research.google/blog/introducing-nested-learning-a-new-ml-paradigm-for-continual-learning/) and the accompanying [paper](https://abehrouz.github.io/files/NL.pdf).
 
-Continual learning studies models that learn from a non-stationary stream (tasks or distributions) while preserving previously acquired capabilities. A central failure mode is **catastrophic forgetting**: continuing gradient updates on new data often degrades performance on older tasks.
+[Continual learning](https://www.cs.uic.edu/~liub/lifelong-learning/continual-learning.pdf) studies models that learn from a non-stationary stream (tasks or distributions) while preserving previously acquired capabilities. A central failure mode is **catastrophic forgetting**: continuing gradient updates on new data often degrades performance on older tasks.
 
 Let
 
@@ -224,11 +224,18 @@ $$
 
 ## Continuum Memory Systems (CMS)
 
-The blog introduces **Continuum Memory Systems (CMS)**: instead of a binary short-term vs long-term split, memory is a *spectrum* of modules with distinct update frequencies.
+Instead of a binary short-term vs long-term split, memory is a *spectrum* of modules with distinct update frequencies.
 
 ### Multi-rate memory modules
 
-Let memory modules be $\left\{M^{(k)}\right\}_{k=1}^{K}$, ordered by decreasing update frequency:
+Let **memory modules** be
+
+$$
+\left\{M^{(k)}\right\}_{k=1}^{K}
+$$
+
+ordered by decreasing update frequency:
+
 $$
 \begin{align*}
 f_{M^{(1)}} \ge f_{M^{(2)}} \ge \dots \ge f_{M^{(K)}}.
@@ -361,10 +368,7 @@ The section describes an evaluation setup and main findings for testing **Hope**
 
 <p align="center"> <img src="https://github.com/hongjun7/logs/blob/main/_posts/image/2026-02-15-Nested-Learning/fig4.png?raw=true"> </p>
 
-* **Result:** **Hope achieves the best average performance** across both language modeling and common-sense reasoning benchmarks, beating all baselines. Additionally, when scaling up parameters, **Hope’s performance improves more than other attention-free models** (stronger scaling gains).
-
-
-
+* **Result:** **Hope achieves the best average performance** across both language modeling and common-sense reasoning benchmarks, beating all baselines. Additionally, when scaling up parameters, **Hope’s performance improves more than other attention-free models**.
 
 ## Appendix A: Equation Reference
 

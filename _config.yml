@@ -17,7 +17,7 @@
 ## => Site Settings
 ##############################
 text_skin: default
-highlight_theme: default
+highlight_theme: tomorrow
 url     : # the base hostname & protocol for your site e.g. https://www.someone.com
 baseurl : # does not include hostname
 title   : "Logs. hongjun7"
