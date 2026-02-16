@@ -1,7 +1,7 @@
 ---
 title: Notes on Common Components in Modern AI Systems
 tags: ml
-subtitle: Tokenization, decoding, prompting, tool-augmented agents, RAG, RLHF, VAEs, diffusion models, and LoRA—presented with standard objective functions and probabilistic notation.
+subtitle: This post introduces basic concepts of tokenization, decoding, prompting, tool-augmented agents, RAG, RLHF, VAEs, diffusion models, and LoRA—presented with standard objective functions and probabilistic notation.
 ---
 
 Modern AI products are typically built by composing a small number of reusable modules: **(i) representations for inputs/outputs**, **(ii) probabilistic generation and control**, **(iii) mechanisms for grounding and alignment**, and **(iv) adaptation or generative modeling techniques**.
