@@ -25,7 +25,7 @@ Utilize [EgorKulikov/rust_algo](https://github.com/EgorKulikov/rust_algo) and [E
   - Begin by installing Rust from the [official website](https://www.rust-lang.org/tools/install).
   - Choose the installation method suitable for your platform.
   - [Jetbrains:RustRover](https://www.jetbrains.com/rust/) is a powerful IDE for Rust. Install this from the official website.
-    <p align="center"> <img src="https://github.com/hongjun7/logs/blob/main/_posts/iamge/2023-09-30-rust-cp-helper/rust_preview.gif?raw=true"> </p>
+    <p align="center"> <img src="https://github.com/hongjun7/logs/blob/main/_posts/image/2023-09-30-rust-cp-helper/rust_preview.gif?raw=true"> </p>
 
 #### 2. Installing [rust-competitive-helper](https://github.com/rust-competitive-helper)
   - Switch default rust toolchain to nightly:
@@ -60,9 +60,9 @@ Utilize [EgorKulikov/rust_algo](https://github.com/EgorKulikov/rust_algo) and [E
 Following the instructions provided above, you have completed the basic setup for solving problems in Rust.
 If you're curious about the additional data structures and algorithms set up in `example-contests-workspace`, refer to [EgorKulikov/rust_algo](https://github.com/EgorKulikov/rust_algo) or [hongjun7/cp-rust](https://github.com/hongjun7/cp-rust).
 
-## Useful resource for learning Rust
-- ["A half-hour to learn Rust" by fasterthanli](https://fasterthanli.me/articles/a-half-hour-to-learn-rust)
-- ["The Rust Book" by Steve Klabnik and Carol Nichols](https://doc.rust-lang.org/book/)
-- [Rust By Example](https://doc.rust-lang.org/stable/rust-by-example/)
-- [Read Rust](https://readrust.net/)
-- [This Week In Rust](https://this-week-in-rust.org/)
+## Reference
+- [[1] "A half-hour to learn Rust" by fasterthanli](https://fasterthanli.me/articles/a-half-hour-to-learn-rust)
+- [[2] "The Rust Book" by Steve Klabnik and Carol Nichols](https://doc.rust-lang.org/book/)
+- [[3] Rust By Example](https://doc.rust-lang.org/stable/rust-by-example/)
+- [[4] Read Rust](https://readrust.net/)
+- [[5] This Week In Rust](https://this-week-in-rust.org/)

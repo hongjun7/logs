@@ -476,5 +476,5 @@ $$
 - LoRA reduces trainable parameters and storage while preserving performance.
 
 ## Reference
-- [[ByteByteAI and ByteByteGo] 9 AI Concepts Explained in 7 minutes: AI Agents, RAGs, Tokenization, RLHF, Diffusion, LoRA...](https://www.youtube.com/watch?v=nVnxG10D5W0)
-- [[Medium] Decoding the Decoder: Top-k, Top-p, Temperature, Beam Search & Hallucinations in LLMs](https://medium.com/@ayushyajnik2/decoding-the-decoder-top-k-top-p-temperature-beam-search-hallucinations-in-llms-e54963eb3de7)
+- [[1] [ByteByteAI and ByteByteGo] 9 AI Concepts Explained in 7 minutes: AI Agents, RAGs, Tokenization, RLHF, Diffusion, LoRA...](https://www.youtube.com/watch?v=nVnxG10D5W0)
+- [[2] [Medium] Decoding the Decoder: Top-k, Top-p, Temperature, Beam Search & Hallucinations in LLMs](https://medium.com/@ayushyajnik2/decoding-the-decoder-top-k-top-p-temperature-beam-search-hallucinations-in-llms-e54963eb3de7)

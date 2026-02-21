@@ -101,8 +101,8 @@ Referring to the figure below, we can see a clear gap between the performance of
 
 ## Reference
 
-- [Poursafaei, Farimah, et al. &#34;Towards better evaluation for dynamic link prediction.&#34; Advances in Neural Information Processing Systems 35 (2022): 32928-32941.](https://proceedings.neurips.cc/paper_files/paper/2022/file/d49042a5d49818711c401d34172f9900-Supplemental-Datasets_and_Benchmarks.pdf)
-- [[Youtube] Temporal Graph Learning Reading Group: Towards Better Evaluation for Dynamic Link Prediction](https://www.youtube.com/watch?v=LvOEvGlVlUU/)
-- [E. Rossi, B. Chamberlain, F. Frasca, D. Eynard, F. Monti, and M. Bronstein. Temporal graph networks for deep learning on dynamic graphs. arXiv preprint arXiv:2006.10637, 2020.](https://arxiv.org/abs/2006.10637)
-- [S. Kumar, X. Zhang, and J. Leskovec. Predicting dynamic embedding trajectory in temporal interaction networks. In Proceedings of the 25th ACM SIGKDD International Conference on Knowledge Discovery &amp; Data Mining, 2019.](https://arxiv.org/abs/1908.01207)
-- [Y. Wang, Y. Chang, Y. Liu, J. Leskovec and P. Li. Inductive Representation Learning in Temporal Networks Via Causal Anonymous Walks. International Conference on Learning Representations (ICLR), 2021.](https://arxiv.org/abs/2101.05974)
+- [[1] Poursafaei, Farimah, et al. &#34;Towards better evaluation for dynamic link prediction.&#34; Advances in Neural Information Processing Systems 35 (2022): 32928-32941.](https://proceedings.neurips.cc/paper_files/paper/2022/file/d49042a5d49818711c401d34172f9900-Supplemental-Datasets_and_Benchmarks.pdf)
+- [[2] Temporal Graph Learning Reading Group: Towards Better Evaluation for Dynamic Link Prediction](https://www.youtube.com/watch?v=LvOEvGlVlUU/)
+- [[3] E. Rossi, B. Chamberlain, F. Frasca, D. Eynard, F. Monti, and M. Bronstein. Temporal graph networks for deep learning on dynamic graphs. arXiv preprint arXiv:2006.10637, 2020.](https://arxiv.org/abs/2006.10637)
+- [[4] S. Kumar, X. Zhang, and J. Leskovec. Predicting dynamic embedding trajectory in temporal interaction networks. In Proceedings of the 25th ACM SIGKDD International Conference on Knowledge Discovery &amp; Data Mining, 2019.](https://arxiv.org/abs/1908.01207)
+- [[5] Y. Wang, Y. Chang, Y. Liu, J. Leskovec and P. Li. Inductive Representation Learning in Temporal Networks Via Causal Anonymous Walks. International Conference on Learning Representations (ICLR), 2021.](https://arxiv.org/abs/2101.05974)

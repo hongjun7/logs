@@ -435,6 +435,6 @@ f_z(H) = \frac{1}{H}\sum_{t=1}^{H} u_z(t)
 $$
 
 ## References
-- [Behrouz et al., *Nested Learning: The Illusion of Deep Learning Architecture* (NeurIPS 2025)](https://abehrouz.github.io/files/NL.pdf)  
-- [Google Research Blog (2025-11-07), *Introducing Nested Learning: A new ML paradigm for continual learning*](https://research.google/blog/introducing-nested-learning-a-new-ml-paradigm-for-continual-learning/)
+- [[1] Behrouz et al., *Nested Learning: The Illusion of Deep Learning Architecture* (NeurIPS 2025)](https://abehrouz.github.io/files/NL.pdf)  
+- [[2] Google Research Blog (2025-11-07), *Introducing Nested Learning: A new ML paradigm for continual learning*](https://research.google/blog/introducing-nested-learning-a-new-ml-paradigm-for-continual-learning/)
 

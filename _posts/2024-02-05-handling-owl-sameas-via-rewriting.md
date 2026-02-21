@@ -118,5 +118,5 @@ An extension to RDFox was implemented to handle *owl:sameAs* through either rewr
 The results confirm that rewriting can significantly reduce materialisation times.
 
 ## Reference
-- [Motik, Boris, et al. "Parallel materialisation of datalog programs in centralised, main-memory RDF systems." Proceedings of the AAAI Conference on Artificial Intelligence. Vol. 28. No. 1. 2014.](https://www.cs.ox.ac.uk/dan.olteanu/papers/mnpho-aaai14.pdf)
-- [Motik, Boris, et al. "Handling owl: sameAs via rewriting." Proceedings of the AAAI Conference on Artificial Intelligence. Vol. 29. No. 1. 2015.](https://ojs.aaai.org/index.php/AAAI/article/view/9187)
+- [[1] Motik, Boris, et al. "Parallel materialisation of datalog programs in centralised, main-memory RDF systems." Proceedings of the AAAI Conference on Artificial Intelligence. Vol. 28. No. 1. 2014.](https://www.cs.ox.ac.uk/dan.olteanu/papers/mnpho-aaai14.pdf)
+- [[2] Motik, Boris, et al. "Handling owl: sameAs via rewriting." Proceedings of the AAAI Conference on Artificial Intelligence. Vol. 29. No. 1. 2015.](https://ojs.aaai.org/index.php/AAAI/article/view/9187)

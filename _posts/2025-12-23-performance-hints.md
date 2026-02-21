@@ -270,3 +270,7 @@ If you only remember one practical sequence for C++ performance work:
 3. **Add fast paths** for common cases (simple flags, early returns).
 4. **Make APIs cheap** (views, spans, bulk ops).
 5. **Fix contention** (short critical sections, sharding).
+
+## Reference
+
+* [[1] Jeff Dean and Sanjay Ghemawat’s “Performance Hints”](https://abseil.io/fast/hints.html)

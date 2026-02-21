@@ -164,8 +164,8 @@ It evaluates each atom’s placement within a query to identify the order with t
 
 ## Reference
 
-- [Hu, Pan, and Boris Motik. &#34;Accurate Sampling-Based Cardinality Estimation for Complex Graph Queries.&#34; ACM Transactions on Database Systems 49.3 (2024): 1-46.](https://dl.acm.org/doi/pdf/10.1145/3689209)
-- [Li, Feifei, et al. &#34;Wander join: Online aggregation via random walks.&#34; Proceedings of the 2016 International Conference on Management of Data. 2016.](https://dl.acm.org/doi/pdf/10.1145/2882903.2915235)
-- [F. Li, B. Wu, K. Yi, and Z. Zhao. 2019. Wander join and XDB: Online aggregation via random walks. ACM Trans. Datab. Syst. 44, 1 (2019), 2:1–2:41.](https://dl.acm.org/doi/pdf/10.1145/3284551)
-- [Y. Park, S. Ko, S. S. Bhowmick, K. Kim, K. Hong, and W.-S. Han. 2020. G-CARE: A framework for performance benchmarking of cardinality estimation techniques for subgraph matching. In Proceedings of the 41st ACM SIGMOD International Conference on Management of Data (SIGMOD’20). ACM Press, 1099–1114.](https://personal.ntu.edu.sg/assourav/papers/SIGMOD-20-GCARE.pdf)
-- [Lipton, R. J., & Naughton, J. F. (1990, April). Query size estimation by adaptive sampling. In Proceedings of the ninth ACM SIGACT-SIGMOD-SIGART symposium on Principles of database systems (pp. 40-46).](https://dl.acm.org/doi/pdf/10.1145/298514.298540)
+- [[1] Hu, Pan, and Boris Motik. &#34;Accurate Sampling-Based Cardinality Estimation for Complex Graph Queries.&#34; ACM Transactions on Database Systems 49.3 (2024): 1-46.](https://dl.acm.org/doi/pdf/10.1145/3689209)
+- [[2] Li, Feifei, et al. &#34;Wander join: Online aggregation via random walks.&#34; Proceedings of the 2016 International Conference on Management of Data. 2016.](https://dl.acm.org/doi/pdf/10.1145/2882903.2915235)
+- [[3] F. Li, B. Wu, K. Yi, and Z. Zhao. 2019. Wander join and XDB: Online aggregation via random walks. ACM Trans. Datab. Syst. 44, 1 (2019), 2:1–2:41.](https://dl.acm.org/doi/pdf/10.1145/3284551)
+- [[4] Y. Park, S. Ko, S. S. Bhowmick, K. Kim, K. Hong, and W.-S. Han. 2020. G-CARE: A framework for performance benchmarking of cardinality estimation techniques for subgraph matching. In Proceedings of the 41st ACM SIGMOD International Conference on Management of Data (SIGMOD’20). ACM Press, 1099–1114.](https://personal.ntu.edu.sg/assourav/papers/SIGMOD-20-GCARE.pdf)
+- [[5] Lipton, R. J., & Naughton, J. F. (1990, April). Query size estimation by adaptive sampling. In Proceedings of the ninth ACM SIGACT-SIGMOD-SIGART symposium on Principles of database systems (pp. 40-46).](https://dl.acm.org/doi/pdf/10.1145/298514.298540)

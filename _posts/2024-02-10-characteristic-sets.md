@@ -206,5 +206,5 @@ The individual cardinality estimates for the following queries are shown below.
 
 ## Reference
 
-- [T. Neumann and G. Moerkotte, "Characteristic sets: Accurate cardinality estimation for RDF queries with multiple joins," 2011 IEEE 27th International Conference on Data Engineering, Hannover, Germany, 2011, pp. 984-994, doi: 10.1109/ICDE.2011.5767868.](https://ieeexplore.ieee.org/document/5767868)
-- [CS848-2018-slides/Characteristic-Sets-Pranjal](https://cs.uwaterloo.ca/~ssalihog/courses/cs848-2018-slides/Characteristic-Sets-Pranjal.pdf)
+- [[1] T. Neumann and G. Moerkotte, "Characteristic sets: Accurate cardinality estimation for RDF queries with multiple joins," 2011 IEEE 27th International Conference on Data Engineering, Hannover, Germany, 2011, pp. 984-994, doi: 10.1109/ICDE.2011.5767868.](https://ieeexplore.ieee.org/document/5767868)
+- [[2] CS848-2018-slides/Characteristic-Sets-Pranjal](https://cs.uwaterloo.ca/~ssalihog/courses/cs848-2018-slides/Characteristic-Sets-Pranjal.pdf)
