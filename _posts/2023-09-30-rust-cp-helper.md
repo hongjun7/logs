@@ -25,7 +25,7 @@ Utilize [EgorKulikov/rust_algo](https://github.com/EgorKulikov/rust_algo) and [E
   - Begin by installing Rust from the [official website](https://www.rust-lang.org/tools/install).
   - Choose the installation method suitable for your platform.
   - [Jetbrains:RustRover](https://www.jetbrains.com/rust/) is a powerful IDE for Rust. Install this from the official website.
-    <p align="center"> <img src="https://github.com/hongjun7/logs/blob/main/_assets/2023-09-30-rust-cp-helper/rust_preview.gif?raw=true"> </p>
+    <p align="center"> <img src="https://github.com/hongjun7/logs/blob/main/_posts/iamge/2023-09-30-rust-cp-helper/rust_preview.gif?raw=true"> </p>
 
 #### 2. Installing [rust-competitive-helper](https://github.com/rust-competitive-helper)
   - Switch default rust toolchain to nightly:
