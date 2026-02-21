@@ -4,7 +4,7 @@ tags: ml
 subtitle: This post introduces a new learning paradigm, Nested Learning (NL), which represents a model as a coherent set of nested, multi-level, and/or parallel optimization problems, each with its own context flow.
 ---
 
-This post introduces Nested Learning as a paradigm for continual learning, drawing on a [Google Research blog post](https://research.google/blog/introducing-nested-learning-a-new-ml-paradigm-for-continual-learning/) and the accompanying [paper](https://abehrouz.github.io/files/NL.pdf).
+This post introduces Nested Learning as a paradigm for continual learning in [Behrouz, Ali, et al. 2025](https://abehrouz.github.io/files/NL.pdf).
 
 [Continual learning](https://www.cs.uic.edu/~liub/lifelong-learning/continual-learning.pdf) studies models that learn from a non-stationary stream (tasks or distributions) while preserving previously acquired capabilities. A central failure mode is **catastrophic forgetting**: continuing gradient updates on new data often degrades performance on older tasks.
 
@@ -435,6 +435,5 @@ f_z(H) = \frac{1}{H}\sum_{t=1}^{H} u_z(t)
 $$
 
 ## References
-- [[1] Behrouz et al., *Nested Learning: The Illusion of Deep Learning Architecture* (NeurIPS 2025)](https://abehrouz.github.io/files/NL.pdf)  
-- [[2] Google Research Blog (2025-11-07), *Introducing Nested Learning: A new ML paradigm for continual learning*](https://research.google/blog/introducing-nested-learning-a-new-ml-paradigm-for-continual-learning/)
-
+- [[1] Behrouz, Ali, et al. "Nested learning: The illusion of deep learning architectures." arXiv preprint arXiv:2512.24695 (2025).](https://abehrouz.github.io/files/NL.pdf)  
+- [[2] Introducing Nested Learning: A new ML paradigm for continual learning, November 7, 2025, Ali Behrouz, Student Researcher, and Vahab Mirrokni, VP and Google Fellow, Google Research](https://research.google/blog/introducing-nested-learning-a-new-ml-paradigm-for-continual-learning/)
