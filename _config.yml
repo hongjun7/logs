@@ -18,16 +18,16 @@
 ##############################
 text_skin: default
 highlight_theme: tomorrow
-url     : # the base hostname & protocol for your site e.g. https://www.someone.com
-baseurl : # does not include hostname
+url     : https://hongjun7.github.io
+baseurl : /logs
 title   : "Logs. hongjun7"
-description:  # this means to ignore newlines until "Language & timezone"
+description: Research notes on machine learning, knowledge graphs, and software systems.
 
 
 ## => Language and Timezone
 ##############################
-lang: # the language of your site, default as "en"
-timezone: # see https://en.wikipedia.org/wiki/List_of_tz_database_time_zones for the available values
+lang: en
+timezone: Asia/Seoul
 
 
 ## => Author and Social
@@ -55,7 +55,7 @@ author:
 ## => GitHub Repository (if the site is hosted by GitHub)
 ##############################
 repository: hongjun7/logs
-repository_tree: master
+repository_tree: main
 
 
 ## => Paths
@@ -198,6 +198,10 @@ exclude:
   - /screenshots
   - /test
   - /vendor
+  - /tools
+  - /verification
+  - CONTRIBUTING.md
+  - THIRD_PARTY_NOTICES.md
 
 defaults:
   - scope:
@@ -221,3 +225,8 @@ plugins:
   - jekyll-paginate
   - jekyll-sitemap
   - jemoji
+
+kramdown:
+  input: GFM
+  math_engine: mathjax
+  syntax_highlighter: rouge

@@ -1,3 +1,7 @@
 ---
-layout: archive
+layout: note-base
+title: Archive
 ---
+<header class="page-header"><p class="eyebrow">THE NOTEBOOK</p><h1>Archive</h1><p>{{ site.posts.size }} articles, organized by year.</p></header>
+{% assign years = site.posts | group_by_exp: 'post', 'post.date | date: "%Y"' %}
+{% for year in years %}<section class="archive-year"><h2>{{ year.name }} <small>{{ year.items.size }}</small></h2><ul class="archive-list">{% for post in year.items %}<li><time datetime="{{ post.date | date_to_xmlschema }}">{{ post.date | date: '%b %-d' }}</time><a href="{{ post.url | relative_url }}">{{ post.title | escape }}</a></li>{% endfor %}</ul></section>{% endfor %}

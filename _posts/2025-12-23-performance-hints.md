@@ -1,276 +1,133 @@
 ---
-title: Performance Hints in C++
-tags: engineering
-subtitle: This post tidies up the core ideas for how to think about, estimate, measure, and ship performance improvements—mainly for single-binary software (not distributed systems or ML hardware tuning).
+title: "Performance Hints in C++: Models, Measurements, and Tradeoffs"
+tags: ["engineering", "performance", "cpp"]
+subtitle: "Turn performance advice into testable hypotheses using Amdahl\u2019s law, memory traffic, allocation behavior, queueing, and reproducible experiments."
+last_modified_at: 2026-10-11
+sources_checked_at: 2026-10-11
 ---
 
-Most performance advice fails because it treats optimisation like a bag of tricks: reserve here, inline there, and hope for the best. In practice, high-impact performance work in C++ is usually about **removing systemic costs** that repeat millions of times: cache misses, allocations, unnecessary work, and contention.
+> **The idea in one minute.** Good performance work starts with a workload and a bottleneck. Reducing allocations, memory traffic, redundant work, or contention often matters more than shortening an expression. A useful optimization preserves behavior, improves an end-to-end metric, and has a measured cost in complexity and maintenance.
 
-[Jeff Dean and Sanjay Ghemawat’s “Performance Hints”](https://abseil.io/fast/hints.html) is essentially a guide to that mindset: not “optimise everything”, but **spot the critical 3% where small savings compound**, especially in library code and hot paths.
+**Reading path.** Start with Amdahl's law and the measurement protocol. Then use the memory, allocation, and concurrency sections as a hypothesis checklist. The numerical examples are explicit models, not measurements of a particular machine.
 
-This post focuses on the ideas that consistently deliver outsized gains in real C++ systems—while keeping the code maintainable.
+## 1. Decide which metric matters
 
----
+Latency, throughput, CPU time, peak memory, allocation count, and energy are different outcomes. A change can improve throughput while increasing tail latency through batching. A cache can lower average compute while increasing memory and invalidation complexity.
 
-## Background
+Specify a representative workload: input sizes and distributions, hot and cold cases, thread count, hardware, compiler, flags, and acceptable behavior. Distinguish a microbenchmark of one operation from an application benchmark. The Dean–Ghemawat [Performance Hints](https://abseil.io/fast/hints.html) offers useful engineering ideas; the derivations below turn several of them into measurable bounds and tradeoffs.
 
-On modern CPUs, “speed” is rarely about raw arithmetic. It’s about **how often you stall** waiting for something:
+## 2. Amdahl’s law limits local wins
 
-* **Cache locality**: if your data isn’t already near the core, you’re paying to fetch it.
-* **Branch prediction**: unpredictable branches cause pipeline flushes. In tight loops this is brutal.
-* **Allocations**: the allocator isn’t just “a function call”—it scatters memory, increases cache footprint, and triggers extra initialisation/destruction work.
-* **Locks**: uncontended locks are cheap-ish; contended locks are a performance cliff. Worse, they can make CPU utilisation look low even when the system is slow.
+Suppose a fraction $$f$$ of baseline execution time is spent in a component. Speeding up only that component by factor $$s$$ gives an ideal total speedup
 
-So the most valuable performance work tends to be:
-**touch less memory, allocate less, branch less unpredictably, and synchronise less.**
+$$
+S=\frac1{(1-f)+f/s}.
+$$
 
----
+**Derivation.** Normalize original time to one. The unaffected portion stays $$1-f$$ and the improved portion becomes $$f/s$$. The inverse of the new time is speedup. This model assumes the workload, interactions, and other costs remain unchanged.
 
-## How to approach
+If $$f=0.2$$ and $$s=5$$, total speedup is $$1/(0.8+0.04)\approx1.19$$, not $$5$$. Even removing the component entirely gives at most $$1/(1-f)=1.25$$. This explains why a dramatic microbenchmark can produce a small user-visible gain.
 
-A reliable workflow in C++ looks like this:
+The formula is a planning tool, not a substitute for profiling. Removing an allocation might also reduce cache misses elsewhere, changing more than one component; batching can add work not present before. Measure the new total rather than enforcing the model mechanically.
 
-- **Classify the code**
+## 3. A reproducible measurement protocol
 
-  * Is this on a per-request path? per-element path? library code used everywhere?
-    If yes, small costs matter.
+Build equivalent programs with the same optimization mode and dependencies. Consume outputs so the compiler cannot discard the work. Separate initialization from repeated operation if the deployment does, and include initialization if users pay it. Measure warm and cold states independently.
 
-- **Estimate before you engineer**
+For repeated times $$T_i$$, report a distribution rather than only the smallest sample. Alternate or randomize baseline and candidate trials to reduce drift from temperature, background load, and CPU frequency. A paired difference $$D_i=T_i^{\mathrm{candidate}}-T_i^{\mathrm{baseline}}$$ can remove shared conditions, though autocorrelation still requires care.
 
-  * If an operation implies disk/network/locks/allocations, you probably don’t need a microscope to know it’s expensive.
-  * Estimation stops you wasting time on micro-changes when the design is the issue.
+Use a CPU profiler to locate work, allocation profiling for churn, and hardware counters for memory and branch behavior. A sample attributed to a function is not proof that one line caused the cost. Change one causal hypothesis, remeasure, and inspect correctness on boundary cases before interpreting speed.
 
-- **Measure with the right lens**
+Performance claims should name the exact binary, input, host, repetitions, aggregation, and uncertainty. “Faster in release mode” has little meaning without a baseline also compiled in release mode.
 
-  * CPU profile (pprof/perf) answers “where time is spent”.
-  * Allocation profile answers “what causes churn”.
-  * Lock contention profiling answers “where threads queue”.
-  * Hardware counters can tell you “you’re cache-miss bound” even if CPU looks “busy”.
+## 4. Memory traffic and locality
 
-- **Prefer changes that reduce cost structurally**
+Let $$F$$ be required operations and $$B$$ transferred bytes. If $$P$$ and $$W$$ are upper bounds on the corresponding processing and bandwidth rates, the accounting model gives
 
-  * Fast paths, data layout, bulk operations, reducing allocations, and sharding locks tend to beat instruction-level tweaks.
+$$
+T\ge\max\left(\frac{F}{P},\frac{B}{W}\right),
+$$
 
----
+The bound follows separately from $$F\le PT$$ and $$B\le WT$$. This roofline-style model separates compute-heavy from bandwidth-heavy hypotheses. Actual time can be higher because of dependency stalls, cache hierarchy effects, and contention. With measured effective rates instead of guaranteed upper bounds, treat the expression as an estimate.
 
-## Ideas
+If a scan transfers $$B=1$$ GB at an effective $$W=50$$ GB/s, the bandwidth term is $$20$$ ms. These are assumed values. Changing an arithmetic operation will not reduce this lower bound; reducing bytes transferred might.
 
-### 1. Allocations
+For a contiguous array of $$n$$ records with stride $$r$$ bytes and cache-line size $$L$$, a full scan touches roughly $$\lceil nr/L\rceil$$ lines when accesses are dense. If only one field is used, a structure-of-arrays representation may reduce traffic. Whether it wins depends on which fields are used together, SIMD behavior, prefetching, and layout overhead.
 
-Allocations cost you in three ways:
+Pointer-based structures add indirection and can scatter accesses. Indices into contiguous storage sometimes reduce pointer width and improve locality, but index bounds, handle lifetime, and relocation semantics become part of the API. A representation change should preserve these contracts.
 
-1. allocator overhead (and possible contention),
-2. repeated initialisation/destruction,
-3. memory scattering → more cache misses later.
+## 5. Allocation and object construction
 
-In a hot loop, even “small” allocations are poison.
-
-##### (A) Reserve once, then push
+`reserve(n)` reserves vector capacity without creating $$n$$ elements; `resize(n)` changes size and constructs new elements. Choose by semantics, not a rule that one is always faster.
 
 ```cpp
-std::vector<Foo> out;
-out.reserve(n);                 // one allocation
-for (...) out.push_back(makeFoo());
-```
-
-**Common mistake:** using `resize(n)` when construction is expensive. `resize` constructs `n` elements, which can double work if you later overwrite.
-
-##### (B) Reuse temporaries across iterations
-
-```cpp
-std::string buf;
-buf.reserve(4096);
-
+std::vector<Result> out;
+out.reserve(items.size());
 for (const auto& item : items) {
-  buf.clear();                  // keep capacity
-  buildInto(buf, item);
-  consume(buf);
+    out.push_back(compute(item));
 }
 ```
 
-This is especially important for `std::string`, `std::vector`, protobuf objects, JSON buffers, etc.
+With geometric capacity growth, appending has amortized constant reallocation work per element, but individual reallocations can still cause a latency spike. Reserve when a useful bound is known. Reserving repeatedly to exactly `size()+1` can destroy geometric growth and introduce quadratic copying behavior.
 
-##### (C) Avoid node-based containers on hot paths
-
-Node containers (`std::map`, `std::unordered_map` often too) allocate per element and chase pointers. Many workloads are faster with **contiguous storage**:
-
-* If you can keep keys sorted: `std::vector<pair<K,V>> + binary_search`
-* If you need hashing: consider flatter hash tables (Abseil’s `flat_hash_map` is a classic example in Google’s world)
-
-Even if you stick to STL: if your map is small or you can batch operations, you can often redesign to a vector-based structure.
-
----
-
-### 2. Cache miss
-
-CPU cores are absurdly fast when they have data in L1/L2. They’re painfully slow when they must fetch from main memory. So you win by ensuring hot code touches **fewer cache lines**.
-
-##### (A) Separate hot fields from cold fields
-
-If your hot loop only needs a few fields, don’t place bulky/cold fields right next to them.
+Reusing a string or scratch vector can retain capacity and avoid repeated allocation:
 
 ```cpp
-struct User {
-  uint64_t id;
-  uint32_t flags;
-  uint32_t quota;
-
-  // cold: rarely needed in hot path
-  std::string display_name;
-  std::string bio;
-};
-```
-
-If cold data is large and rarely touched, put it behind indirection:
-
-```cpp
-struct UserCold { std::string display_name, bio; };
-
-struct User {
-  uint64_t id;
-  uint32_t flags, quota;
-  std::unique_ptr<UserCold> cold; // only when needed
-};
-```
-
-##### (B) Prefer indices over pointers for graph-like structures
-
-Pointers are 64-bit and lead to random memory access. Indices often keep you in contiguous arrays:
-
-```cpp
-struct Edge { uint32_t to; };      // index into nodes[]
-std::vector<Node> nodes;
-std::vector<Edge> edges;
-```
-
-This often improves locality and reduces memory footprint at once.
-
-##### (C) Choose “flat” representations
-
-If you can turn “many small objects” into “one big array”, you often get a step-change improvement.
-
-A classic example: avoid `vector<unique_ptr<T>>` if `vector<T>` works.
-
----
-
-### 3. Avoid work you don’t need
-
-The best optimisation is not doing the thing at all. And this is where you can gain a lot **without** turning the code into assembly.
-
-##### (A) Make the common case cheap with a simple flag
-
-This pattern is extremely common in Dean/Ghemawat’s examples: skip a loop if you can prove it’s unnecessary.
-
-```cpp
-struct Stats {
-  std::array<double, 16> errors{};
-  bool any_error = false;
-
-  void set_error(int i, double v) {
-    errors[i] = v;
-    any_error = true;
-  }
-
-  void merge_from(const Stats& other) {
-    if (!other.any_error) return;     // cheap common case
-    for (int i = 0; i < 16; ++i) errors[i] += other.errors[i];
-    any_error = true;
-  }
-};
-```
-
-This is “boringly readable” and often huge in practice.
-
-##### (B) Move expensive checks to module boundaries
-
-Instead of validating the same invariants repeatedly inside inner loops, validate input once when it enters the module.
-
----
-
-### 4. API choices
-
-Some of the best performance wins come from enabling callers to avoid copies and per-call overhead, especially for libraries.
-
-##### (A) Use view types for read-only params
-
-```cpp
-void parse(std::string_view s);  // avoids copies, accepts string/substr/etc.
-```
-
-For arrays:
-
-```cpp
-void process(std::span<const int> xs); // C++20
-```
-
-This keeps APIs flexible *and* fast.
-
-##### (B) Bulk operations to amortise overhead
-
-If callers call your API in a loop, you may be forcing repeated locks, repeated lookups, repeated boundary costs.
-
-Instead of:
-
-```cpp
-Value lookup(Key k);
-```
-
-Provide:
-
-```cpp
-void lookup_many(std::span<const Key> keys,
-                 std::span<Value> out);
-```
-
-Even if callers don’t adopt it immediately, you can sometimes **use bulk internally** and cache results.
-
----
-
-### 5. Concurrency
-
-A contended lock doesn’t just “cost some nanoseconds”. It serialises progress and can destroy throughput. It can also make CPU profiles misleading (threads are blocked, not burning CPU).
-
-##### (A) Keep critical sections tiny
-
-Don’t do expensive work while holding a lock.
-
-```cpp
-auto v = build_value(k);           // do this outside
-{
-  std::lock_guard lk(mu);
-  cache.emplace(k, std::move(v));  // short lock
+std::string buffer;
+for (const auto& item : items) {
+    buffer.clear();
+    encode_into(item, buffer);
+    consume(buffer);
 }
 ```
 
-##### (B) Shard a hot mutex
+This is safe only if `consume` does not retain a view after the next mutation. A `std::string_view` does not own storage; lifetime and invalidation errors are correctness failures regardless of benchmark speed. Similar care applies to iterators and references into growing vectors. [C++ Core Guidelines](https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines).
 
-A simple sharding scheme often gives a clean 2x-ish throughput jump under concurrency:
+## 6. Fast paths, caching, and avoiding work
 
-```cpp
-static constexpr size_t kShards = 16;
+A fast path should rely on a maintained invariant. If a flag says there is no pending work, every producer must update that flag correctly. Skipping a scan using a stale flag loses results. The performance technique creates an additional state consistency obligation.
 
-struct Shard { std::mutex mu; std::unordered_map<int,int> m; };
-std::array<Shard, kShards> shards;
+Let cache hit rate be $$h$$, hit cost $$c_h$$, and miss cost including recomputation $$c_m$$. Ignoring invalidation and memory effects, expected cost is
 
-Shard& shard_for(int k) {
-  return shards[std::hash<int>{}(k) % kShards];
-}
-```
+$$
+\mathbb E[C]=hc_h+(1-h)c_m.
+$$
 
-**Key caution:** shard selection must not create skew (e.g., bad hash bits).
+A useful cache also pays for hashing, keys, eviction, memory, and invalidation. Keys must include every input that affects the output, including configuration or data revision. Cached answers after a dependency changes can be fast and wrong.
 
----
+Precompute only when reuse pays for storage and construction. For a sorted vector, binary search has $$O(\log n)$$ comparisons and dense storage. A hash table has expected $$O(1)$$ lookup under assumptions about hashing and load, with different locality, memory, and adversarial behavior. Asymptotic labels alone do not choose the best representation.
 
-## Conclusion
+## 7. Concurrency and queueing
 
-If you only remember one practical sequence for C++ performance work:
+Adding threads helps only when useful independent work exceeds synchronization and scheduling costs. False sharing occurs when threads modify distinct variables located on the same cache line. Padding may help in a measured case but increases footprint and can hurt locality elsewhere.
 
-1. **Stop allocating in hot paths** (reserve, reuse, avoid node containers).
-2. **Flatten data** (contiguous storage, indices not pointers, hot/cold separation).
-3. **Add fast paths** for common cases (simple flags, early returns).
-4. **Make APIs cheap** (views, spans, bulk ops).
-5. **Fix contention** (short critical sections, sharding).
+Little's law gives
 
-## Reference
+$$
+L=\lambda W
+$$
 
-* [[1] Jeff Dean and Sanjay Ghemawat’s “Performance Hints”](https://abseil.io/fast/hints.html)
+for a stable system with consistent averages, where $$L$$ is average work in the system, $$\lambda$$ arrival rate, and $$W$$ average residence time. It does not by itself identify the source of delay. As utilization approaches capacity, queueing can dominate latency even if service time improves slightly.
+
+For an idealized M/M/1 queue with Poisson arrivals, exponential service, and $$\lambda<\mu$$, mean residence time is $$1/(\mu-\lambda)$$. Real applications often violate those assumptions. The model illustrates sensitivity near saturation; it is not a production tail-latency prediction.
+
+Batching amortizes fixed overhead but adds waiting. Benchmark at realistic offered load and report both p50 and p95/p99 when the sample budget supports them. A closed-loop benchmark that waits for each response may underrepresent queue buildup under external arrivals.
+
+## 8. API choices and correctness costs
+
+Bulk APIs can avoid repeated parsing, validation, and synchronization. They also change cancellation, partial failure, and ownership behavior. A shared buffer reduces copying only if callers understand how long it is valid. A move transfers ownership; it is not automatically free for every type or operation.
+
+Before adopting a performance change, identify: preserved observable results, ordering guarantees, exception or error behavior, ownership lifetime, and concurrent access rules. Measure regressions on small inputs and infrequent paths as well as the hot case. A large gain with a subtle invalidation bug is not a completed optimization.
+
+## 9. A practical decision record
+
+Record the bottleneck hypothesis, baseline profile, change, representative results, uncertainty, and maintenance cost. Keep the smallest clear change that meets the workload's goal. If an optimization changes only a tiny portion of total time, explain that limitation rather than presenting the microbenchmark ratio as application speedup.
+
+Current tool versions and hardware rates can change. Recheck profiler and compiler documentation for the environment, and measure local constants instead of reusing famous latency tables as precise facts.
+
+## References
+
+- [Dean and Ghemawat, Performance Hints](https://abseil.io/fast/hints.html).
+- [C++ Core Guidelines](https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines).
+- [Google Benchmark](https://github.com/google/benchmark): tooling for repeatable microbenchmarks.
+- [Abseil performance notes](https://abseil.io/fast/): current engineering discussions and measurement caveats.

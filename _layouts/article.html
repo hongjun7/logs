@@ -1,29 +1,16 @@
 ---
-layout: page
-type: article
+layout: note-base
 ---
-
-{%- include snippets/assign.html
-  target = site.data.variables.default.page.sharing
-  source0=layout.sharing source1=page.sharing -%}
-{%- assign _sharing = __return -%}
-
-<div class="layout--article">
-  {%- include article/top/custom.html -%}
-
-  <div class="article__content" itemprop="articleBody">{{ content }}</div>
-
-  {%- if _sharing -%}
-    <section class="article__sharing d-print-none">{%- include sharing.html -%}</section>
-  {%- endif -%}
-
-  <div class="d-print-none">
-    {%- include article-footer.html -%}
-    {%- include article-section-navigator.html -%}
-  </div>
-
-</div>
-
-<script>
-  {%- include scripts/article.js -%}
-</script>
+<article class="research-note">
+  <header class="post-header">
+    <a class="breadcrumb" href="{{ '/' | relative_url }}">← All notes</a>
+    <div class="card-topics">{% for tag in page.tags %}<a href="{{ '/tags.html' | relative_url }}#{{ tag | slugify }}">{{ tag }}</a>{% endfor %}</div>
+    <h1>{{ page.title | escape }}</h1>
+    <p class="post-description">{{ page.subtitle | escape }}</p>
+    <div class="post-meta"><time datetime="{{ page.date | date_to_xmlschema }}">{{ page.date | date: '%B %-d, %Y' }}</time><span aria-hidden="true">·</span><span>{{ content | number_of_words | divided_by: 180 | plus: 1 }} min read</span><span aria-hidden="true">·</span><span>{{ site.author.name }}</span></div>
+    {% if page.last_modified_at %}<p class="revision-date">Revised {{ page.last_modified_at | date: '%B %-d, %Y' }} · Sources checked through {{ page.sources_checked_at | default: page.last_modified_at | date: '%B %-d, %Y' }}</p>{% endif %}
+  </header>
+  <details class="toc" open><summary>On this page</summary><nav id="toc-list" aria-label="Table of contents"></nav></details>
+  <div class="article-content" id="article-content">{{ content }}</div>
+  <footer class="post-footer"><p>Found a correction? <a href="https://github.com/hongjun7/logs/issues">Open an issue ↗</a></p><nav class="post-neighbors" aria-label="Adjacent articles">{% if page.previous %}<a href="{{ page.previous.url | relative_url }}"><small>Previous</small>{{ page.previous.title | escape }}</a>{% endif %}{% if page.next %}<a href="{{ page.next.url | relative_url }}"><small>Next</small>{{ page.next.title | escape }}</a>{% endif %}</nav></footer>
+</article>

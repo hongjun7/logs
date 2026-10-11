@@ -1,171 +1,208 @@
 ---
-title: "Accurate Sampling-Based Cardinality Estimation for Complex Graph Queries"
-tags: query cardinality estimation
-subtitle: This post provides a novel, strongly consistent method for accurately and efficiently estimating the cardinality of complex graph queries.
+title: "Sampling-Based Cardinality Estimation: Unbiasedness, Consistency, and Complex Queries"
+tags: ["databases", "cardinality", "probability"]
+subtitle: "Derive inverse-probability estimates for joins, explain why DISTINCT changes the sample space, and separate asymptotic convergence from finite-budget accuracy."
+last_modified_at: 2026-10-11
+sources_checked_at: 2026-10-11
 ---
-Accurate cardinality estimation (i.e., predicting the number of answers to a query) is a vital aspect of database systems, particularly in graph databases where queries often involve numerous joins and self-joins.
 
-Recent studies identified that a sampling method based on the [WanderJoin algorithm](https://dl.acm.org/doi/pdf/10.1145/2882903.2915235) is highly effective in estimating cardinality for graph queries. However, this method has limitations, especially in handling complex queries and performing efficiently on large datasets.
+> **The idea in one minute.** A sampler does not need to enumerate every query answer. It can sample answers or derivations, track the probability of each outcome, and use inverse-probability weighting to estimate the total. The hard part is matching the sample space to the query's semantics, especially for projection, UNION, DISTINCT, and MINUS.
 
-This post explores a novel approach inspired by WanderJoin that can effectively handle complex graph queries and improve performance.
+**Reading path.** Start with the unbiasedness proof and small join example. Then read the distinction between answers and derivations. The last sections discuss strong consistency, uncertainty, and query-planning cost. Prerequisites are expectation, variance, and relational joins.
 
-## Preliminaries
+## 1. Define exactly what is counted
 
-Let's consider the following SPARQL query.
-
-<p align="center"> <img src="https://github.com/hongjun7/logs/blob/main/_posts/image/2024-10-29-Accurate-Sampling-Based-Cardinality-Estimation/query1.png?raw=true" width="100%"> </p>
-
-The nested **DISTINCT** operators were intended to reduce bindings for the $?mounting$ and $?motor$ variables, improving query efficiency. However, the RDF system had difficulty creating an efficient query plan due to inaccurate cardinality estimates for the **UNION** and **DISTINCT** subqueries, as well as their joins.
-
-In summary, there are following challenges:
-
-- Queries often involve multiple joins and self-joins.
-- Data distributions can be skewed, leading to inaccurate or zero estimates.
-- Cardinality estimation needs to account for complex graph operations like union, projection, and duplicate elimination. Here is the syntax and the semantics of the SPARQL.
-  <p align="center"> <img src="https://github.com/hongjun7/logs/blob/main/_posts/image/2024-10-29-Accurate-Sampling-Based-Cardinality-Estimation/tab1.png?raw=true" width="100%"> </p>
-
-Existing methods struggle with such complexities and may produce slow or inaccurate results on larger datasets.
-
-## Related Approaches to Query Cardinality Estimation
-
-### Principles of Sampling-based Cardinality Estimation
-
-Most of sampling-based cardinality estimation methods can be viewed as variations of a [method introduced by Lipton and Naughton](ttps://dl.acm.org/doi/pdf/10.1145/298514.298540).
-
-The approach involves partitioning the set of query results $ A $ from a database $ I $ into disjoint subsets $ A_1, A_2, ... , A_n $, allowing for efficient calculation of the size of each subset. By randomly selecting one subset and using its size to estimate the total cardinality( $ n \lvert A_i \rvert $ ), an unbiased estimate is obtained because $ A_1, ... , A_n $ are disjoint.
+Let $$Q$$ be a query on a fixed finite database $$I$$. Its answer can be a set of bindings or a bag whose binding $$\mu$$ has multiplicity $$m_Q(\mu)$$. Set cardinality is $$\vert \{\mu:m_Q(\mu)>0\}\vert $$; bag cardinality is
 
 $$
-( \sum_{i=1}^{n} n \lvert A_i \rvert )/n = \sum_{i=1}^{n} \lvert A_i \rvert = \lvert A \rvert
+N_Q=\sum_\mu m_Q(\mu).
 $$
 
-The method is adaptable to various query types, including recursive path and datalog queries.  Moreover, estimation accuracy can be improved by computing the average of several samples, and a key question is how many samples should be taken. For certain classes of queries, it is possible to precompute the number of samples so the resulting estimate is within desired bounds. Alternatively, one can keep taking samples until the estimate falls within a confidence interval computed.
+These differ after projection or unions. Query syntax is not enough; a sampling estimator must implement the corresponding semantics. The Hu–Motik work addresses complex graph queries through compositional evaluation and carefully weighted sampling, going beyond a simple conjunctive random walk. [Hu and Motik, TODS 2024](https://www.cs.ox.ac.uk/people/boris.motik/pubs/hm24-accurate-sampling.pdf).
 
-### The WanderJoin Algorithm
+## 2. Inverse-probability estimation
 
-WanderJoin randomly selects facts from the database instance for each atom (query component) but ensures that these selections are not independent.
+Suppose a single draw samples $$a$$ from finite set $$A$$ with known probability $$q(a)>0$$ for every $$a\in A$$. Define
 
-For example, let $ Q = AND(R(x, y), S(y, z), T(z, x)) $ be the example query.
+$$
+X=\frac1{q(a)}.
+$$
 
-When evaluating $ Q $, it first selects a fact from relation $R$, then matches facts from $S$ that join correctly with $R$, and finally matches $T$ to complete a valid query answer.
+Then
 
-The order in which atoms are sampled critically determines the accuracy of the estimates produced by WanderJoin.
+$$
+\mathbb E[X]=\sum_{a\in A}q(a)\frac1{q(a)}=\vert A\vert .
+$$
 
-The advantage is its flexibility, as it doesn't need predefined schemas, making it ideal for unpredictable graph database queries.
+This is a with-replacement inverse-probability estimator, commonly associated with Hansen–Hurwitz sampling. Horvitz–Thompson instead samples a subset $$S$$ and weights each included element by its **inclusion probability** $$\pi_a=\Pr(a\in S)$$:
 
-[Li et al.](https://dl.acm.org/doi/pdf/10.1145/3284551) emphasize the need for an optimal atom order to improve cardinality estimates, proposing trial runs with all reasonable orders and selecting the least costly one for further trials. [Park et al.](https://personal.ntu.edu.sg/assourav/papers/SIGMOD-20-GCARE.pdf) integrate this into G-CARE as the **WJ** method, which averages 30 estimation attempts to find the final result. Orders are tested in a round-robin fashion, and the best one, based on variance, is used for the remaining runs.
+$$
+\widehat N_{\mathrm{HT}}=\sum_{a\in S}\frac1{\pi_a}.
+$$
 
-The **WJ** method handles only conjunction queries, while [Li et al.](https://dl.acm.org/doi/pdf/10.1145/3284551)'s approach supports **AGGREGATE** queries but not **DISTINCT** queries or nested operators.
+Draw probabilities and inclusion probabilities are different quantities. For $$n$$ independent draws with replacement, $$\pi_a=1-(1-q(a))^n$$. Deduplicating sampled draws and continuing to weight by $$1/q(a)$$ would generally be biased.
 
+A partition version is equally instructive. If $$A=A_1\uplus\cdots\uplus A_k$$ and we choose $$i$$ uniformly, $$X=k\vert A_i\vert $$ has expectation $$\vert A\vert $$. The disjointness is essential; overlapping subsets count some answers multiple times unless corrected.
 
-### Cardinality Estimation Methods Used in the G-CARE Framework
+## 3. WanderJoin and failed walks
 
-The G-CARE framework's cardinality estimation algorithms, as described by [Park et al.](https://personal.ntu.edu.sg/assourav/papers/SIGMOD-20-GCARE.pdf), are classified into two categories: **synopsis-based** and **sampling-based** methods.
+Consider $$R(x,y)\Join S(y,z)$$. First choose a tuple from $$R$$ uniformly. Then choose uniformly among tuples in $$S$$ matching its $$y$$. If a first-stage tuple has degree $$d(y)>0$$, the path probability is
 
-#### Synopsis-based methods:
+$$
+q(r,s)=\frac1{\vert R\vert }\frac1{d(y)}.
+$$
 
-- Bounded Sketch (BS) : Divides relations into partitions, recording constants and max degree for each, and uses bounding formulas to estimate cardinality based on query structure.
-- Characteristic Sets (C-Set) : Summarizes star-shaped structures in the database and estimates cardinality by decomposing queries into subqueries and combining results using independence assumptions.
-- SumRDF : Merges graph vertices to summarize the graph and uses possible worlds semantics to estimate query cardinality with certainty bounds.
+For one successful complete binding, use $$X=\vert R\vert d(y)$$. A walk with no match returns zero. Successful paths contribute one unit in expectation; failed paths contribute none. Keeping failures as zero-weight outcomes preserves the unconditional expectation. Retrying until success and treating accepted walks as original draws changes the distribution and requires renormalization.
 
-#### Sampling-based methods:
+### A small exact example
 
-- $ J_{SUB} $ : Samples a fact matching the first query atom, evaluates the rest with this atom bound, similar to CS2 but samples for each estimate.
-- Correlated Sampling (CS) : Uses hashing to create a database synopsis instead of sampling data.
-- $ I_{MPR} $ : Adapts random walks to estimate the number of graphlets in a visible subgraph, tailored for graph matching and directed labelled graphs.
+Let $$R$$ have two tuples. The first joins one tuple in $$S$$; the second joins three. There are four complete join bindings. With probability $$1/2$$ we get $$X=2$$, and with probability $$1/2$$ we get $$X=6$$:
 
-## Motivation
+$$
+\mathbb E[X]=4,\qquad\operatorname{Var}(X)=4.
+$$
 
-Consider queries $Q_1$, $Q_2$ and a database instance $I$ as follows.
+The sample mean of $$n$$ independent walks has variance $$4/n$$. This is a full calculation for a toy database, not a claim about the variance of every graph query. A rare high-degree path can produce enormous weights and make finite-sample estimates unstable.
 
-<p align="center"> <img src="https://github.com/hongjun7/logs/blob/main/_posts/image/2024-10-29-Accurate-Sampling-Based-Cardinality-Estimation/query2.png?raw=true" width="100%"> </p>
+For a longer walk, multiply the conditional selection probabilities at every step. Closing an already bound cycle may be a Boolean existence test rather than a fresh random choice. Multiple derivations of the same projected binding require further care.
 
-To apply the approach from the method proposed by Lipton and Naughton, we could partition $ I $ into $ I_i = \lbrace R(a, b_i), S(b_i, c) \rbrace $ for $ 1 ≤ i ≤ k $; cleary, $ ans_{I}(Q) = \bigcup_{i=1}^{k} ans_{I_i}(Q_2) $, as required. To estimate the cardinality of $ Q_2 $ in $ I $, we randomly choose $ i ∈ {1, ..., k} $ and return $ k \lvert ans_{I_i}(Q_2) \rvert $ as the estimate. Since $ I_i $ is much smaller than $ I $, computing $ \lvert ans_{I_i}(Q_2) \rvert $ is likely to be much faster than computing $ \lvert ans_{I}(Q_2) \rvert $.
+## 4. Why DISTINCT is difficult
 
-Duplicate elimination reduces the number of answers in a way that can prevent effective partitioning. Indeed, $ ans_{I}(Q) ≠ \bigcup_{i=1}^{k} ans_{I_i}(Q_2) $, so the partitioning from the previous paragraph is not applicable. In fact, it is unclear how to partition $ I $ into $ I_1, ... , I_n $ so $ ans_{Q_1}(I) = \bigcup_{i=1}^{n} ans_{Q_1}(I_i) $ holds but computing $ \lvert ans_{I_i}(Q_2) \rvert $ is much faster than computing $ \lvert ans_I(Q_2) \rvert $.
+Consider
 
-The approach in the next chapter addresses these problems. In particular, it can process query $ Q_1 $ efficiently, and it is applicable even if $ Q_1 $ is conjoined with another query.
+```sparql
+PREFIX : <urn:example:>
+SELECT DISTINCT ?x WHERE { ?x :knows ?y }
+```
 
-Overall there are two main issues:
+A person with 100 neighbors has 100 derivations but contributes one distinct answer. A person with one neighbor has one derivation and also contributes one. An unbiased estimator of derivations is not an unbiased estimator of distinct subjects.
 
-- Existing methods cannot handle complex queries with arbitrary operator nesting
-- Partitioning techniques struggle with duplicate elimination
+Let $$W_x$$ be the derivations mapping to answer $$x$$. If a draw over derivations has probabilities $$q(w)$$, the probability of answer $$x$$ is
 
-## Strongly Consistent Cardinality Estimator for Complex Queries
+$$
+q_A(x)=\sum_{w\in W_x}q(w).
+$$
 
-This chapter explains the cardinality estimation approach by outlining the query evaluation, underlying intuitions, the basic algorithm with its optimisation, and practical considerations.
+Weighting a sampled answer by $$1/q_A(x)$$ would count distinct answers correctly when those probabilities are known and positive. But computing that sum may itself require difficult query work. This explains the need for more sophisticated query-aware sampling constructions rather than an after-the-fact `set()` on sampled bindings.
 
-### Query Evaluation via Sideways Information Passing
+For bag `UNION`, multiplicities add: $$m_{A\cup B}(x)=m_A(x)+m_B(x)$$. For distinct union, set cardinality obeys $$\vert A\cup B\vert =\vert A\vert +\vert B\vert -\vert A\cap B\vert $$. Branch sampling must account for overlap and branch probabilities. It is not enough to average branch cardinalities and call the result a union size.
 
-Standard query evaluation typically proceeds in a bottom-up manner. For instance, when evaluating a query such as $ Q = Q_1 $ AND $ Q_2 $, the results of $ Q_1 $ and $ Q_2 $ are computed individually before joining the two results.
+## 5. MINUS, filters, and side information
 
-However, this process can be optimised using a technique known as ***sideway information passing***. This technique allows one operator in a query plan to pass potential variable bindings to other operators, enabling them to eliminate irrelevant tuples early on. By doing so, the evaluation becomes more efficient without needing to fully compute the entire result set. Such techniques have been applied to various types of queries, including relational, RDF, recursive, and visual query processing.
+Filters may reject a sampled binding. If rejected outcomes remain in the sampling process with zero contribution and the probability calculation matches the process, unbiasedness can be retained. If rejection causes hidden retries, the accepted distribution changes.
 
-In particular, the procedure evalI(Q, σ) uses a variant of sideways information passing to evaluate a query $ Q $ over a database instance $ I $. While this algorithm can be practical, the paper's main point is conceptual: the cardinality estimation algorithm can be seen as "sampling the loops" of evalI. Essentially, the algorithm functions similarly to the magic sets transformation but is adapted for more complex, nested queries. For example, when evaluating $ Q = Q_1 $ AND $ Q_2 $, the algorithm enumerates all the answers for $ Q_1 $ and then evaluates $ Q_2 $ in the context of each answer.
+SPARQL `MINUS` is not ordinary set difference over fully materialized tuples in all cases. Compatibility of partial solution mappings and their shared variable domains determines removal. A query estimator must reproduce those conditions, including the special treatment of disjoint variable domains. [SPARQL 1.1](https://www.w3.org/TR/sparql11-query/).
 
-The algorithm facilitates sideways information passing through the substitution $ σ $, which provides context for subqueries that are evaluated prior to $ Q $. Only answers compatible with this context substitution are produced. The algorithm is presented as a generator, where each invocation of $eval_{I}(Q, σ)$ provides an iterator, and the output keyword adds one substitution to the iterator result. Additionally, the algorithm is structured to process one tuple at a time, which, while potentially incurring random access costs, can be offset by the benefits of sideways information passing, especially in RAM-based databases.
+Sideways information passing means evaluating a subquery under bindings already produced elsewhere. It can shrink the eligible sampling population substantially. Any changed restriction also changes the probability of selecting an outcome. Memoization is valid only when its key includes every binding and semantic context affecting the result.
 
-This sideways information passing significantly reduces the number of tuples processed and ensures the evaluation is efficient, even for complex queries. The algorithm also incorporates optimisation techniques like nested loop joins, duplicate removal, and minimisation strategies to handle a wide range of query types.
+## 6. Strong consistency is an asymptotic statement
 
-The paper demonstrates that the algorithm is practical in specific cases and that its prototype implementation effectively evaluates queries with these optimisations in place.
+For independent identically distributed $$X_1,X_2,\ldots$$ with $$\mathbb E\vert X_1\vert <\infty$$ and $$\mathbb E X_1=N$$, the strong law gives
 
-<p align="center"> <img src="https://github.com/hongjun7/logs/blob/main/_posts/image/2024-10-29-Accurate-Sampling-Based-Cardinality-Estimation/alg1.png?raw=true" width="100%"> </p>
+$$
+\overline X_n=\frac1n\sum_{i=1}^{n}X_i
+\xrightarrow[n\to\infty]{\mathrm{a.s.}}N.
+$$
 
-### Principles for Estimating the Cardinality of Complex Queries
+This means convergence with probability one as the sample count grows without bound. It does **not** mean a thousand samples are enough, a finite run cannot return zero, or a confidence interval is automatically reliable under severe skew.
 
-The WanderJoin algorithm proposes an optimization technique called "sampling the loops" which, unlike traditional algorithms that iterate over all matcher combinations, selects just one pair of matchers to generate an answer. This selective process leverages sideways information passing, significantly reducing the complexity required to approximate the full result set of a query. Several examples illustrate WanderJoin's versatility across query types, such as UNION, MINUS, and DISTINCT, where partial sampling provides unbiased estimates.
+For a fixed finite sample space with strictly positive selection probabilities, inverse-probability weights are bounded, so the integrability condition holds. That theoretical bound can still be too large to give useful finite-budget concentration. Adaptive samplers need their own conditions; iid arguments do not transfer unchanged when probabilities are updated using prior samples.
 
-For instance, in **UNION** queries, sampling a single matcher and its candidate count yields an unbiased result, with repeated runs converging toward the actual cardinality.
+## 7. Variance, confidence, and stopping
 
-In **MINUS** queries, only valid matches are selected, enhancing accuracy.
+For iid draws with finite variance, estimate
 
-With **DISTINCT** queries, the algorithm avoids duplicates by choosing unique matches within unions, thereby minimizing estimation bias.
+$$
+s_n^2=\frac1{n-1}\sum_i(X_i-\overline X_n)^2,
+\qquad\widehat{\operatorname{SE}}(\overline X_n)=\frac{s_n}{\sqrt n}.
+$$
 
-This approach effectively reduces variance by averaging over multiple sampling runs, ultimately converging on highly accurate cardinality estimates. Notably, it achieves efficient and reliable results without exhaustive data examination.
+A normal-approximation interval may be useful at large sample sizes with a well-behaved distribution, but it is fragile when nearly all walks fail and rare huge weights dominate. An observed variance of zero after all-zero samples is not proof that the true count is zero.
 
-### The Basic Cardinality Estimation Approach
+Repeatedly stopping when an ordinary fixed-sample interval first looks narrow can invalidate its nominal coverage. Use a justified sequential procedure or reserve an independent evaluation budget. Report sampler support, failures, effective budget, and heavy-tail diagnostics rather than only a point estimate.
 
-**Algorithm 2** is designed to estimate the cardinality of query results by leveraging a sampling-based method. Taking as inputs a database instance, a query, and a context substitution, the algorithm returns a structured triple [ω, β, c] representing sampled outcomes, a substitution satisfying the query conditions, and a cardinality estimate. In cases where no answer is found, the algorithm signals failure. This process incorporates loop sampling, enabling random selections from a sample space optimised via fixed probability distributions.
+When two plans for the same subexpression give estimates, disagreement can indicate variance, probability-accounting mistakes, or different semantics. Store the logical subexpression, context bindings, database revision, and random seed with cached results.
 
-<p align="center"> <img src="https://github.com/hongjun7/logs/blob/main/_posts/image/2024-10-29-Accurate-Sampling-Based-Cardinality-Estimation/alg2.png?raw=true" width="100%"> </p>
+## 8. The estimator must pay for itself
 
-For **DISTINCT** queries, the algorithm maintains a global mapping of substitutions to ensure unique outcomes, mirroring the structure of a Horvitz–Thompson estimator. The approach is unbiased and consistent, allowing conjunctions, disjunctions, and filters to be managed through recursive calls that account for both successful estimates and failures. The algorithm’s general structure can be extended to graph query languages and aggregation functions, though certain complex queries, like nested aggregations, may present additional challenges. Further refinements are planned to incorporate more advanced query forms, such as Conjunctive Regular Path Queries (CRPQs).
+An optimizer can request hundreds of subquery estimates. Total latency is
 
-### Optimising the Basic Approach
+$$
+T_{\mathrm{total}}=T_{\mathrm{statistics}}+T_{\mathrm{planning}}+T_{\mathrm{execution}}.
+$$
 
-There is an improved version of **Algorithm 2** that reduces variance and computation time by refining the sampling process. Instead of maintaining Horvitz–Thompson estimations for all calls, the new approach uses unbiased but simplified estimates, especially for **UNION** and conjunctive queries. By sampling without replacement in certain cases, it achieves broader sample coverage and lower estimator variance. **Algorithm 3** aggregates independent estimates for query components, offering faster, more consistent cardinality estimates while retaining accuracy for various query structures.
+More accurate estimates are beneficial only when the execution gain justifies the added planning cost for the workload. Estimate reuse, indexed restricted scans, pilot sampling, and order selection can reduce the budget. All are engineering choices whose correctness still depends on probability accounting.
 
-<p align="center"> <img src="https://github.com/hongjun7/logs/blob/main/_posts/image/2024-10-29-Accurate-Sampling-Based-Cardinality-Estimation/alg3.png?raw=true" width="100%"> </p>
+Compare q-error distributions, false-zero rates, planning time, final query time, and worst regressions against both synopsis methods and simple sampling. Stratify results by query shape, cardinality, and skew. Averages alone can hide a small group of catastrophic plans.
 
-### Practical Considerations
+## 9. Derive the variance and the ideal proposal
 
-There are key optimisations to make **Algorithm 2** and **Algorithm 3** more practical:
+For a finite answer set $$A$$ of size $$N$$ with positive draw probabilities $$q(a)$$, the inverse-probability variable has
 
-1. **Order Enumeration:** Determining an optimal order for atoms in a conjunction (e.g., **AND** clauses) can reduce variance. Rather than testing all permutations, only select a subset where the choice of the first atom significantly impacts the estimation, reducing computational effort for cases like star queries.
+$$
+\mathbb E[X^2]=\sum_{a\in A}\frac1{q(a)},
+\qquad
+\operatorname{Var}(X)=\sum_{a\in A}\frac1{q(a)}-N^2.
+$$
 
-2. **Single Order Selection:** To further decrease variance, **Algorithm 4** uses simple data statistics to order atoms by minimising sample space choices. Although this ordering can be imprecise, Algorithms 2 and 3 compensate with accurate cardinality estimates.
+Cauchy–Schwarz applied to vectors $$\sqrt{q(a)}$$ and $$1/\sqrt{q(a)}$$ gives
 
-3. **Dynamic Stopping Condition:** To avoid excessive runs, a dynamic stopping criterion adjusts based on variance and q-error targets, ensuring an efficient yet reliable number of runs for cardinality estimation.
+$$
+N^2\le\left(\sum_aq(a)\right)\left(\sum_a\frac1{q(a)}\right).
+$$
 
-4. **Partitioned Sample Space:** Sample space is partitioned into fixed-size blocks to better capture relevant data without excessive computation, particularly in complex queries.
+Equality occurs at uniform $$q(a)=1/N$$, when $$X=N$$ on every draw and variance is zero. The apparent ideal hides the hard part: sampling uniformly from query answers and knowing $$1/N$$ can require work comparable to the query itself.
 
-5. **Combining Algorithms:** For complex queries that return zero estimates, a fallback from **Algorithm 2** to the optimised **Algorithm 3** ensures more accurate results without overloading simpler queries.
+For the two-first-tuple join example, selecting an initial tuple proportionally to its join degree and then uniformly selecting a neighbor makes all four complete paths equally likely. The inverse probability becomes four on every draw. This is exact after degrees and their total have been computed; it is not a free way to discover that total. A good proposal balances the cost of constructing sampling information against the reduction in variance.
 
-6. **Dependency-Directed Backtracking:** When an atom fails to match, the algorithm backtracks to earlier matches that determined variable bindings, avoiding redundant searches and enhancing efficiency in complex joins.
+If failed walks absorb probability mass, denote successful path probabilities by $$q(a)$$ and keep failure weight zero. The second-moment formula remains $$\sum_a1/q(a)$$, but $$\sum_aq(a)\le1$$. Rare success can make variance enormous. If any valid answer has probability zero, the expectation omits it; no number of samples can repair missing support.
 
-<p align="center"> <img src="https://github.com/hongjun7/logs/blob/main/_posts/image/2024-10-29-Accurate-Sampling-Based-Cardinality-Estimation/alg4.png?raw=true" width="100%"> </p>
+## 10. A finite bound is only as good as its weight bound
 
-## Integrating Cardinality Estimation into Query Planning
+Suppose every successful probability is at least $$q_{\min}>0$$, and failures have weight zero. Then $$0\le X\le M=1/q_{\min}$$. For independent draws, Hoeffding's inequality gives
 
-Accurate cardinality estimates can greatly enhance query performance, particularly for complex queries. **Algorithm 5** introduces a dynamic programming-based query planner that builds efficient query orders by minimising costly cross-products and reducing unnecessary substitutions.
+$$
+\Pr(\vert \overline X_n-N\vert \ge\epsilon)
+\le2\exp\left(-\frac{2n\epsilon^2}{M^2}\right).
+$$
 
-It evaluates each atom’s placement within a query to identify the order with the lowest cumulative cost based on cardinality estimates. This approach dynamically selects the most efficient order at each stage, significantly reducing query evaluation times while adding only minimal overhead. Experimental results confirm that this planner produces more optimised query plans, showcasing the value of data-informed orderings in streamlining query processing.
+A sufficient budget for failure probability at most $$\delta$$ is
 
-<p align="center"> <img src="https://github.com/hongjun7/logs/blob/main/_posts/image/2024-10-29-Accurate-Sampling-Based-Cardinality-Estimation/alg5.png?raw=true" width="100%"> </p>
+$$
+n\ge\frac{M^2}{2\epsilon^2}\log\frac2\delta.
+$$
 
-## Reference
+This controls **absolute** error. Setting $$\epsilon=\eta N$$ for relative error requires knowing or lower-bounding the unknown $$N$$. A mathematically finite $$M$$ may be huge, making the sufficient bound unusable in practice. Report the observed weight distribution and the worst-case support bound rather than equating strong consistency with a useful latency budget.
 
-- [[1] Hu, Pan, and Boris Motik. &#34;Accurate Sampling-Based Cardinality Estimation for Complex Graph Queries.&#34; ACM Transactions on Database Systems 49.3 (2024): 1-46.](https://dl.acm.org/doi/pdf/10.1145/3689209)
-- [[2] Li, Feifei, et al. &#34;Wander join: Online aggregation via random walks.&#34; Proceedings of the 2016 International Conference on Management of Data. 2016.](https://dl.acm.org/doi/pdf/10.1145/2882903.2915235)
-- [[3] F. Li, B. Wu, K. Yi, and Z. Zhao. 2019. Wander join and XDB: Online aggregation via random walks. ACM Trans. Datab. Syst. 44, 1 (2019), 2:1–2:41.](https://dl.acm.org/doi/pdf/10.1145/3284551)
-- [[4] Y. Park, S. Ko, S. S. Bhowmick, K. Kim, K. Hong, and W.-S. Han. 2020. G-CARE: A framework for performance benchmarking of cardinality estimation techniques for subgraph matching. In Proceedings of the 41st ACM SIGMOD International Conference on Management of Data (SIGMOD’20). ACM Press, 1099–1114.](https://personal.ntu.edu.sg/assourav/papers/SIGMOD-20-GCARE.pdf)
-- [[5] Lipton, R. J., & Naughton, J. F. (1990, April). Query size estimation by adaptive sampling. In Proceedings of the ninth ACM SIGACT-SIGMOD-SIGART symposium on Principles of database systems (pp. 40-46).](https://dl.acm.org/doi/pdf/10.1145/298514.298540)
+An adaptive proposal $$q_t$$ chosen from past information can still satisfy $$\mathbb E[X_t\mid\mathcal F_{t-1}]=N$$ when probability accounting is exact and every answer remains supported. This conditional identity is a martingale property, not independence. Concentration or almost-sure convergence needs an applicable martingale theorem and its moment/boundedness assumptions; it cannot be justified by copying the iid proof.
+
+## 11. Distinct answers: a numerical support example
+
+Suppose person A has 100 neighbors and person B has one. Sampling uniformly from the 101 edges gives answer probabilities $$q_A(A)=100/101$$ and $$q_A(B)=1/101$$. Correct distinct-answer weights are $$101/100$$ and $$101$$. Their expected value is
+
+$$
+\frac{100}{101}\frac{101}{100}+\frac1{101}101=2.
+$$
+
+By contrast, using the edge-path weight 101 gives expectation 101, the number of derivations. Merely retaining distinct values in a finite sampled batch gives a third statistic: the number of subjects observed, which is at most two and has a sample-size-dependent expectation. These three calculations count different populations.
+
+For a subset-based Horvitz–Thompson estimator, variance also depends on pairwise inclusion probabilities $$\pi_{ab}=\Pr(a,b\in S)$$:
+
+$$
+\operatorname{Var}(\widehat N_{\mathrm{HT}})
+=\sum_{a,b}\frac{\pi_{ab}-\pi_a\pi_b}{\pi_a\pi_b},
+\qquad\pi_{aa}=\pi_a.
+$$
+
+Derive it by expanding the variance of $$\sum_a\mathbf1\{a\in S\}/\pi_a$$. Sampling without replacement introduces dependence between inclusion indicators. Treating them as independent generally misstates uncertainty even though the estimator's expectation is correct.
+
+These distinctions explain why a complex query sampler must specify its elementary outcomes, derivation-to-answer map, failed branches, and all relevant probabilities. The probabilistic proof is part of the operator's implementation contract.
+
+## References and current scope
+
+- [Hu and Motik, Accurate Sampling-Based Cardinality Estimation for Complex Graph Queries](https://www.cs.ox.ac.uk/people/boris.motik/pubs/hm24-accurate-sampling.pdf).
+- [Wander Join, SIGMOD 2016](https://doi.org/10.1145/2882903.2915235).
+- [G-CARE benchmark](https://github.com/yspark-dblab/gcare).
+- [SPARQL 1.1 query semantics](https://www.w3.org/TR/sparql11-query/).
+
+The derivations above explain the foundation; they are not a substitute implementation of every operator in the 2024 paper. An estimator inherits that paper's guarantees only after its sampling construction and assumptions are faithfully implemented.
