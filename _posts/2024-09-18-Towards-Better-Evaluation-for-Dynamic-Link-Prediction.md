@@ -2,18 +2,17 @@
 lang: en
 translation_key: 2024-09-18-Towards-Better-Evaluation-for-Dynamic-Link-Prediction
 translation_url: /ko/2024/09/18/Towards-Better-Evaluation-for-Dynamic-Link-Prediction.html
-title: "Dynamic Link Prediction: Time, Negative Samples, and Honest Evaluation"
+title: "Dynamic Link Prediction"
 tags: ["graphs", "evaluation", "temporal-graphs"]
-subtitle: "Why temporal prediction can look solved under easy negatives, how EdgeBank exposes memorization, and how modern temporal benchmarks define a reproducible protocol."
-last_modified_at: 2026-10-11
+subtitle: "Temporal state, negative sampling, and ranking evaluation."
+last_modified_at: 2026-10-29
 sources_checked_at: 2026-10-11
 ---
 
-> **The idea in one minute.** Predicting a future interaction is meaningful only relative to a time horizon and a candidate set. Easy random negatives can reward remembering old edges rather than identifying the next interaction. Chronological splits, difficult but valid negatives, and a simple EdgeBank baseline reveal how much a model actually learns.
+Dynamic link prediction estimates future interactions or ranks their endpoints from a time-ordered history. The observation window, candidate set, and negative sampler define the task; easy negatives can make edge memorization look like prediction.
 
-**Reading path.** Begin with the prediction target and chronological state. Then inspect how negative sampling changes the measured problem. The ranking formulas and current benchmark resources follow. Prerequisites are graphs, sets, and binary classification.
-
-## 1. Events are not a static edge set
+## Events and targets
+{: id="1-events-are-not-a-static-edge-set"}
 
 A temporal graph contains events
 
@@ -21,51 +20,54 @@ $$
 \mathcal E=\{(u_i,v_i,t_i,x_i)\}_{i=1}^{m},\qquad t_1\le\cdots\le t_m,
 $$
 
-with optional event attributes $$x_i$$. Repeated $$(u,v)$$ pairs at different times remain distinct events. A static edge set would collapse them and lose the recurrence pattern.
+Here $$x_i$$ contains optional event attributes. Repeated $$(u,v)$$ pairs at different times are distinct; a static edge set loses that recurrence.
 
-At prediction time $$t$$, the available history is $$\mathcal H_{<t}$$. One possible target is
+At time $$t$$, history $$\mathcal H_{<t}$$ supports targets such as
 
 $$
 \Pr\big((u,v)\text{ interacts in }[t,t+\Delta)\mid\mathcal H_{<t}\big).
 $$
 
-Another is ranking the observed destination among candidates for a given source and event time. These are different tasks. The first requires a defined horizon $$\Delta$$ and a distribution over candidate pairs; the second is a conditional ranking test and need not yield calibrated real-world event probabilities.
+Alternatively, a source and event time define a destination-ranking task. Event probabilities need a horizon $$\Delta$$ and candidate-pair distribution; conditional rankings need not be calibrated probabilities.
 
-## 2. Chronological splits and causal features
+## Chronological state
+{: id="2-chronological-splits-and-causal-features"}
 
-Use ordered intervals for training, validation, and test. A model at time $$t$$ must not see later events through an embedding, graph neighborhood, normalization statistic, or preprocessing step. Fit learned preprocessing only on permitted training information.
+Training, validation, and test occupy ordered intervals. At $$t$$, embeddings, neighborhoods, normalization, and learned preprocessing can use only permitted earlier information.
 
-During evaluation, distinguish two protocols: a frozen-history setting that never updates from test events, and online replay that predicts each test event before adding it to history. Both can be reasonable for different deployment scenarios. They yield different EdgeBank and neural-model performance, so state the choice.
+Frozen-history evaluation keeps its pre-test history unchanged throughout the test period. Online replay predicts each test event before adding it to history. These protocols model different deployments and produce different EdgeBank and neural scores.
 
-Events sharing a timestamp require a policy. If they represent simultaneous observations, predicting one after updating with another at the same time can introduce artificial information. Predict a timestamp batch using the history strictly before that timestamp, then update with the batch.
+When events are simultaneous, their order within a stored file does not make one available before the other. They form a timestamp batch: predict all from strictly earlier history, then update together. Within-batch updates otherwise expose unavailable information.
 
-## 3. New edges and new nodes are different
+## New pairs and nodes
+{: id="3-new-edges-and-new-nodes-are-different"}
 
-Let $$E_{\mathrm{train}}$$ and $$E_{\mathrm{test}}$$ denote sets of endpoint pairs appearing in each period. Then
+For endpoint-pair sets $$E_{\mathrm{train}}$$ and $$E_{\mathrm{test}}$$,
 
 $$
 E_{\mathrm{test}}\cap E_{\mathrm{train}}
 $$
 
-contains recurring pairs, while $$E_{\mathrm{test}}\setminus E_{\mathrm{train}}$$ contains new pairs. A new pair can connect two familiar nodes. It is therefore not automatically a new-node inductive example.
+contains recurring pairs; $$E_{\mathrm{test}}\setminus E_{\mathrm{train}}$$ contains new pairs, possibly between familiar nodes.
 
-Separately define node sets $$V_{\mathrm{train}}$$ and $$V_{\mathrm{test}}$$. A test edge touching $$V_{\mathrm{test}}\setminus V_{\mathrm{train}}$$ tests a different generalization problem. “Inductive negative sampling” in a named benchmark is a protocol label; read its definition rather than infer it from the word inductive.
+Node sets $$V_{\mathrm{train}}$$ and $$V_{\mathrm{test}}$$ define another split: an edge touching $$V_{\mathrm{test}}\setminus V_{\mathrm{train}}$$ tests new-node generalization. A benchmark’s “inductive negative sampling” follows its own protocol definition.
 
-For a timestamp edge set $$E_t$$, define prior pairs $$E_{<t}=\bigcup_{s<t}E_s$$. A simple new-pair fraction is
+For timestamp pairs $$E_t$$ and previous pairs $$E_{<t}=\bigcup_{s<t}E_s$$, the new-pair fraction is
 
 $$
 \nu_t=\frac{\vert E_t\setminus E_{<t}\vert }{\vert E_t\vert },\qquad \vert E_t\vert >0.
 $$
 
-This counts unique pairs at a timestamp, not event multiplicities. A stream with repeated events can have a different event-weighted fraction. State the denominator when using temporal edge-appearance plots.
+This denominator counts unique timestamp pairs rather than the number of event records. Weighting repeated events instead defines a different appearance fraction.
 
-## 4. What negative sampling really changes
+## Negative sampling
+{: id="4-what-negative-sampling-really-changes"}
 
-Positive events are observed interactions. Negative candidates often mean “not observed at this evaluation time,” not “impossible” and not “will never occur.” Missing observations and delayed interactions can produce false negatives relative to another target definition.
+An unobserved candidate is not necessarily impossible or permanently absent. Missing and delayed observations can become false negatives under a different target definition.
 
-Randomly selecting an arbitrary destination can create extremely easy negatives, particularly in a sparse graph. Historical negatives instead emphasize pairs seen previously but absent from the current positive batch. Other protocols emphasize pairs absent from training. The 2022 evaluation paper studies how these choices change rankings and exposes the strength of memorization. [Poursafaei et al.](https://proceedings.neurips.cc/paper_files/paper/2022/hash/d49042a5d49818711c401d34172f9900-Abstract-Datasets_and_Benchmarks.html).
+Random destinations are often easy negatives in sparse graphs. Historical negatives use previously seen pairs absent from the current positive batch; other protocols use pairs absent from training. These choices alter model rankings and memorization advantages. [Poursafaei et al., 2022](https://proceedings.neurips.cc/paper_files/paper/2022/hash/d49042a5d49818711c401d34172f9900-Abstract-Datasets_and_Benchmarks.html).
 
-For a sampled binary dataset, a score estimates the positive class under the **sampled distribution**. If sampling only changes the class prior while leaving class-conditional feature distributions unchanged, prior correction obeys
+Binary scores fit the sampled distribution. If sampling changes only the class prior, preserving class-conditional feature distributions, posterior odds obey
 
 $$
 \frac{p_{\mathrm{deploy}}(1\mid x)}{1-p_{\mathrm{deploy}}(1\mid x)}
@@ -74,21 +76,22 @@ $$
 \frac{\pi_{\mathrm{deploy}}/(1-\pi_{\mathrm{deploy}})}{\pi_{\mathrm{sample}}/(1-\pi_{\mathrm{sample}})}.
 $$
 
-This assumption often fails when hard negatives change the conditional distribution itself. In that case, a simple prior correction cannot turn sampled classifier outputs into deployment probabilities.
+Hard negatives can change those conditional distributions, invalidating prior-only correction to deployment probabilities.
 
-## 5. EdgeBank as a transparent baseline
+## EdgeBank
+{: id="5-edgebank-as-a-transparent-baseline"}
 
-An infinite-memory EdgeBank assigns
+Infinite-memory EdgeBank scores prior membership:
 
 $$
 s_t(u,v)=\mathbf1\{(u,v)\in E_{<t}\}.
 $$
 
-A sliding-window version restricts memory to a recent interval $$[t-w,t)$$. The window $$w$$ is a hyperparameter chosen on validation data. A hash set supports expected $$O(1)$$ membership checks and uses $$O(\vert E_{<t}\vert )$$ storage for unique pairs; that is not necessarily the number of events.
+A windowed version keeps $$[t-w,t)$$, selecting $$w$$ on validation data. Hash membership takes expected $$O(1)$$ time and $$O(\vert E_{<t}\vert )$$ storage for unique pairs, not events.
 
-On recurring positives and mostly never-seen random negatives, this one-bit baseline can score well without learning. Historical negatives intentionally challenge it with previously seen pairs that are not current positives. This makes EdgeBank an informative probe of the evaluation distribution rather than a universal replacement for temporal models.
+This one-bit rule separates recurring positives from unseen negatives without fitting any parameters. Historical negatives challenge that separation, making EdgeBank a probe of sampler difficulty.
 
-A minimal replay rule is:
+Online replay follows this order:
 
 ```text
 for each timestamp batch:
@@ -97,42 +100,44 @@ for each timestamp batch:
     add the current positive batch to history, if the protocol permits updates
 ```
 
-The order matters. Adding the current positive edge before scoring it turns a baseline into a label leak.
+Scoring after adding the current positive would leak its label.
 
-## 6. Ranking metrics and candidate sets
+## Ranking metrics
+{: id="6-ranking-metrics-and-candidate-sets"}
 
-For one positive candidate with score $$s^+$$ and $$K$$ negatives $$s_j^-$$, a pessimistic rank is
+For positive score $$s^+$$ and $$K$$ negative scores $$s_j^-$$, pessimistic rank is
 
 $$
 r=1+\sum_{j=1}^{K}\mathbf1\{s_j^-\ge s^+\}.
 $$
 
-With no ties this is the usual rank. With ties, optimistic, pessimistic, or averaged ranks differ; use the benchmark's evaluator. Over $$n$$ events,
+Without ties this is the usual rank; optimistic rank counts only strictly higher negatives, while pessimistic and average conventions treat ties differently. Across $$n$$ events,
 
 $$
 \mathrm{MRR}=\frac1n\sum_i\frac1{r_i},\qquad
 \mathrm{Hits@}k=\frac1n\sum_i\mathbf1\{r_i\le k\}.
 $$
 
-Increasing the number or difficulty of candidates can lower these metrics for the same score function. Never compare MRR from one negative per positive against MRR from hundreds as though they describe the same task.
+Increasing candidate count or difficulty can lower both metrics for an unchanged scorer. MRR with one negative and MRR with hundreds describe different tests.
 
-AUROC measures pairwise score ordering under sampled positives and negatives. Average precision additionally depends strongly on prevalence and ranking. Report the sampler, candidate count, class ratio, tie treatment, and aggregation unit along with any metric. Macro-averaging over sources and event-weighted micro-averaging answer different questions when activity is skewed.
+AUROC measures pairwise ordering; average precision also depends strongly on prevalence. Sampler, candidate count, class ratio, ties, and aggregation define the result. Source-macro averaging weights sources equally; event-micro averaging weights their event counts. Skewed activity therefore changes their interpretation.
 
-## 7. Modern benchmark practice
+## Benchmark protocols
+{: id="7-modern-benchmark-practice"}
 
-The [Temporal Graph Benchmark paper](https://arxiv.org/abs/2307.01026) and [TGB repository](https://github.com/shenyangHuang/TGB) provide a broader evaluation framework. Use the dataset's prescribed negative samples and evaluator when reporting leaderboard-compatible results, then add a deployment-relevant evaluation with an explicitly different label.
+[Temporal Graph Benchmark](https://arxiv.org/abs/2307.01026) supplies dataset-specific negatives and evaluators in its [repository](https://github.com/shenyangHuang/TGB). Preserving them enables leaderboard comparisons; deployment-specific variants form separate evaluations.
 
-A reproducible experiment records dataset revision, event ordering, negative-file checksum, model configuration, seeds, state-reset policy, and validation selection. Compare EdgeBank, static feature baselines, and temporal methods at matched observation histories. Evaluate new pairs, recurring pairs, and new nodes separately when sample sizes support those slices.
+Dataset revisions, event order, negative-file checksums, configurations, seeds, resets, and validation selection determine reproducibility. Matched histories support EdgeBank, static, and temporal comparisons, with new-pair, recurring-pair, and new-node slices where sufficiently populated.
 
-Test time and memory as well: a large recurrent memory may retain an advantage unavailable on a constrained device. Model quality, replay throughput, and online latency are separate measurements.
+Replay throughput, online latency, and memory complement prediction quality. A recurrent-state advantage may exceed a constrained device’s resources.
 
-## 8. Common failure cases
+## Failure modes
+{: id="8-common-failure-cases"}
 
-A time split does not prevent leakage if embeddings were trained on the full graph. A hard negative is not valid if it is a simultaneous positive excluded by mistake. A high AUC does not imply calibrated interaction probabilities. A model's strong result on one interaction network does not establish generalization to another event process.
-
-The goal is a clearly defined forecasting or ranking problem, with information available at the correct time. Once that contract is fixed, results become interpretable and comparisons become useful.
+Full-graph embeddings can leak across a time split. Simultaneous positives are invalid negatives. High AUC need not imply calibrated probabilities, and one interaction network does not establish cross-process generalization.
 
 ## References
+{: id="references"}
 
 - [Towards Better Evaluation for Dynamic Link Prediction, NeurIPS 2022](https://proceedings.neurips.cc/paper_files/paper/2022/hash/d49042a5d49818711c401d34172f9900-Abstract-Datasets_and_Benchmarks.html).
 - [DGB and EdgeBank implementation](https://github.com/fpour/DGB).

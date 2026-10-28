@@ -2,66 +2,52 @@
 lang: en
 translation_key: 2025-12-23-performance-hints
 translation_url: /ko/2025/12/23/performance-hints.html
-title: "Performance Hints in C++: Models, Measurements, and Tradeoffs"
+title: "Performance Hints"
 tags: ["engineering", "performance", "cpp"]
-subtitle: "Turn performance advice into testable hypotheses using Amdahl\u2019s law, memory traffic, allocation behavior, queueing, and reproducible experiments."
-last_modified_at: 2026-10-11
+subtitle: "Bottlenecks, memory traffic, allocation, and concurrency in C++ performance work."
+last_modified_at: 2026-10-29
 sources_checked_at: 2026-10-11
 ---
 
-> **The idea in one minute.** Good performance work starts with a workload and a bottleneck. Reducing allocations, memory traffic, redundant work, or contention often matters more than shortening an expression. A useful optimization preserves behavior, improves an end-to-end metric, and has a measured cost in complexity and maintenance.
+Performance work connects a measured bottleneck to an application metric. Allocation, memory traffic, redundant work, and contention often matter more than shorter expressions. The models below develop several ideas from Dean and Ghemawat's [Performance Hints](https://abseil.io/fast/hints.html); their numerical examples are assumed workloads, not machine measurements.
 
-**Reading path.** Start with Amdahl's law and the measurement protocol. Then use the memory, allocation, and concurrency sections as a hypothesis checklist. The numerical examples are explicit models, not measurements of a particular machine.
+<div id="3-a-reproducible-measurement-protocol"></div>
 
-## 1. Decide which metric matters
+## Metrics and measurement
+{: id="1-decide-which-metric-matters"}
 
-Latency, throughput, CPU time, peak memory, allocation count, and energy are different outcomes. A change can improve throughput while increasing tail latency through batching. A cache can lower average compute while increasing memory and invalidation complexity.
+Latency, throughput, CPU time, peak memory, allocations, and energy can move in opposite directions. Batching trades waiting for throughput; caching trades memory and invalidation work for computation. A representative benchmark therefore specifies input distributions, hot/cold states, threads, hardware, compiler, flags, and required behavior.
 
-Specify a representative workload: input sizes and distributions, hot and cold cases, thread count, hardware, compiler, flags, and acceptable behavior. Distinguish a microbenchmark of one operation from an application benchmark. The Dean–Ghemawat [Performance Hints](https://abseil.io/fast/hints.html) offers useful engineering ideas; the derivations below turn several of them into measurable bounds and tradeoffs.
+Equivalent builds must consume their outputs so the compiler cannot discard the work. Warm and cold runs are separate; initialization belongs in the timing when users pay for it. Repeated times $$T_i$$ describe a distribution, not just its minimum. Alternating or randomizing trials reduces drift; paired differences $$D_i=T_i^{\mathrm{candidate}}-T_i^{\mathrm{baseline}}$$ remove shared conditions but not necessarily autocorrelation. CPU/allocation profiles and hardware counters locate candidate costs, not proof that one source line caused them. Results need the binary, input, host, repetitions, aggregation, and uncertainty.
 
-## 2. Amdahl’s law limits local wins
+## Amdahl's law
+{: id="2-amdahls-law-limits-local-wins"}
 
-Suppose a fraction $$f$$ of baseline execution time is spent in a component. Speeding up only that component by factor $$s$$ gives an ideal total speedup
+If a component occupies fraction $$f$$ of baseline time and becomes $$s$$ times faster,
 
 $$
 S=\frac1{(1-f)+f/s}.
 $$
 
-**Derivation.** Normalize original time to one. The unaffected portion stays $$1-f$$ and the improved portion becomes $$f/s$$. The inverse of the new time is speedup. This model assumes the workload, interactions, and other costs remain unchanged.
+Normalizing baseline time to one leaves $$1-f$$ unchanged and reduces the component to $$f/s$$. This assumes unchanged workload, interactions, and other costs. With $$f=0.2$$ and $$s=5$$, total speedup is $$1/(0.8+0.04)\approx1.19$$, rather than $$5$$; removing the component entirely permits at most $$1/(1-f)=1.25$$. Cross-component effects, such as fewer cache misses after removing allocations, require a new end-to-end measurement.
 
-If $$f=0.2$$ and $$s=5$$, total speedup is $$1/(0.8+0.04)\approx1.19$$, not $$5$$. Even removing the component entirely gives at most $$1/(1-f)=1.25$$. This explains why a dramatic microbenchmark can produce a small user-visible gain.
+## Memory traffic
+{: id="4-memory-traffic-and-locality"}
 
-The formula is a planning tool, not a substitute for profiling. Removing an allocation might also reduce cache misses elsewhere, changing more than one component; batching can add work not present before. Measure the new total rather than enforcing the model mechanically.
-
-## 3. A reproducible measurement protocol
-
-Build equivalent programs with the same optimization mode and dependencies. Consume outputs so the compiler cannot discard the work. Separate initialization from repeated operation if the deployment does, and include initialization if users pay it. Measure warm and cold states independently.
-
-For repeated times $$T_i$$, report a distribution rather than only the smallest sample. Alternate or randomize baseline and candidate trials to reduce drift from temperature, background load, and CPU frequency. A paired difference $$D_i=T_i^{\mathrm{candidate}}-T_i^{\mathrm{baseline}}$$ can remove shared conditions, though autocorrelation still requires care.
-
-Use a CPU profiler to locate work, allocation profiling for churn, and hardware counters for memory and branch behavior. A sample attributed to a function is not proof that one line caused the cost. Change one causal hypothesis, remeasure, and inspect correctness on boundary cases before interpreting speed.
-
-Performance claims should name the exact binary, input, host, repetitions, aggregation, and uncertainty. “Faster in release mode” has little meaning without a baseline also compiled in release mode.
-
-## 4. Memory traffic and locality
-
-Let $$F$$ be required operations and $$B$$ transferred bytes. If $$P$$ and $$W$$ are upper bounds on the corresponding processing and bandwidth rates, the accounting model gives
+For $$F$$ operations and $$B$$ transferred bytes, processing-rate bound $$P$$ and bandwidth bound $$W$$ imply
 
 $$
 T\ge\max\left(\frac{F}{P},\frac{B}{W}\right),
 $$
 
-The bound follows separately from $$F\le PT$$ and $$B\le WT$$. This roofline-style model separates compute-heavy from bandwidth-heavy hypotheses. Actual time can be higher because of dependency stalls, cache hierarchy effects, and contention. With measured effective rates instead of guaranteed upper bounds, treat the expression as an estimate.
+because $$F\le PT$$ and $$B\le WT$$. Dependency stalls, caches, and contention can increase time. Substituting measured effective rates makes this an estimate rather than a guaranteed bound. A hypothetical scan of $$B=1$$ GB at $$W=50$$ GB/s takes $$20$$ ms in the bandwidth term; changing arithmetic cannot reduce that term.
 
-If a scan transfers $$B=1$$ GB at an effective $$W=50$$ GB/s, the bandwidth term is $$20$$ ms. These are assumed values. Changing an arithmetic operation will not reduce this lower bound; reducing bytes transferred might.
+A dense scan of $$n$$ contiguous records, stride $$r$$ bytes, and cache lines of $$L$$ bytes touches roughly $$\lceil nr/L\rceil$$ lines. Structure-of-arrays can save traffic when only selected fields are read; joint field access, SIMD, prefetching, and layout overhead determine the result. Contiguous indices can reduce pointer indirection and width, but bounds, handle lifetimes, and relocation remain API contracts.
 
-For a contiguous array of $$n$$ records with stride $$r$$ bytes and cache-line size $$L$$, a full scan touches roughly $$\lceil nr/L\rceil$$ lines when accesses are dense. If only one field is used, a structure-of-arrays representation may reduce traffic. Whether it wins depends on which fields are used together, SIMD behavior, prefetching, and layout overhead.
+## Allocation and lifetime
+{: id="5-allocation-and-object-construction"}
 
-Pointer-based structures add indirection and can scatter accesses. Indices into contiguous storage sometimes reduce pointer width and improve locality, but index bounds, handle lifetime, and relocation semantics become part of the API. A representation change should preserve these contracts.
-
-## 5. Allocation and object construction
-
-`reserve(n)` reserves vector capacity without creating $$n$$ elements; `resize(n)` changes size and constructs new elements. Choose by semantics, not a rule that one is always faster.
+`reserve(n)` allocates capacity without constructing $$n$$ elements; `resize(n)` changes size and constructs elements.
 
 ```cpp
 std::vector<Result> out;
@@ -71,9 +57,7 @@ for (const auto& item : items) {
 }
 ```
 
-With geometric capacity growth, appending has amortized constant reallocation work per element, but individual reallocations can still cause a latency spike. Reserve when a useful bound is known. Reserving repeatedly to exactly `size()+1` can destroy geometric growth and introduce quadratic copying behavior.
-
-Reusing a string or scratch vector can retain capacity and avoid repeated allocation:
+Geometric growth gives amortized constant reallocation work per append, with possible latency spikes. Repeated `reserve(size()+1)` can instead cause quadratic copying. Reusing capacity avoids allocations:
 
 ```cpp
 std::string buffer;
@@ -84,53 +68,43 @@ for (const auto& item : items) {
 }
 ```
 
-This is safe only if `consume` does not retain a view after the next mutation. A `std::string_view` does not own storage; lifetime and invalidation errors are correctness failures regardless of benchmark speed. Similar care applies to iterators and references into growing vectors. [C++ Core Guidelines](https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines).
+Here `consume` must not retain a view across the next mutation. Non-owning `std::string_view`, vector references, and iterators remain subject to lifetime and invalidation rules ([C++ Core Guidelines](https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines)).
 
-## 6. Fast paths, caching, and avoiding work
+## Caches and fast paths
+{: id="6-fast-paths-caching-and-avoiding-work"}
 
-A fast path should rely on a maintained invariant. If a flag says there is no pending work, every producer must update that flag correctly. Skipping a scan using a stale flag loses results. The performance technique creates an additional state consistency obligation.
-
-Let cache hit rate be $$h$$, hit cost $$c_h$$, and miss cost including recomputation $$c_m$$. Ignoring invalidation and memory effects, expected cost is
+Skipping work requires a maintained invariant: a stale “nothing pending” flag can lose results. For cache hit rate $$h$$, hit cost $$c_h$$, and miss/recomputation cost $$c_m$$,
 
 $$
 \mathbb E[C]=hc_h+(1-h)c_m.
 $$
 
-A useful cache also pays for hashing, keys, eviction, memory, and invalidation. Keys must include every input that affects the output, including configuration or data revision. Cached answers after a dependency changes can be fast and wrong.
+excludes invalidation and memory effects. Hashing, keys, eviction, storage, and dependency revisions add costs; omitting an output-affecting input from the key permits stale answers. Precomputation pays only with sufficient reuse. Sorted-vector lookup takes $$O(\log n)$$ comparisons; hashing has expected $$O(1)$$ lookup under hashing/load assumptions. Locality, footprint, and adversarial inputs still distinguish them.
 
-Precompute only when reuse pays for storage and construction. For a sorted vector, binary search has $$O(\log n)$$ comparisons and dense storage. A hash table has expected $$O(1)$$ lookup under assumptions about hashing and load, with different locality, memory, and adversarial behavior. Asymptotic labels alone do not choose the best representation.
+## Concurrency and queues
+{: id="7-concurrency-and-queueing"}
 
-## 7. Concurrency and queueing
-
-Adding threads helps only when useful independent work exceeds synchronization and scheduling costs. False sharing occurs when threads modify distinct variables located on the same cache line. Padding may help in a measured case but increases footprint and can hurt locality elsewhere.
-
-Little's law gives
+Independent work must outweigh synchronization and scheduling costs. False sharing places independently modified variables on one cache line; padding may reduce contention while increasing footprint. For stable systems with consistent averages, Little's law is
 
 $$
 L=\lambda W
 $$
 
-for a stable system with consistent averages, where $$L$$ is average work in the system, $$\lambda$$ arrival rate, and $$W$$ average residence time. It does not by itself identify the source of delay. As utilization approaches capacity, queueing can dominate latency even if service time improves slightly.
+where $$L$$ is average work in the system, $$\lambda$$ the arrival rate, and $$W$$ mean residence time. It does not identify the delay's cause. The idealized M/M/1 model assumes Poisson arrivals, exponential service, and $$\lambda<\mu$$, giving mean residence time $$1/(\mu-\lambda)$$. This illustrates saturation sensitivity, not production tail latency.
 
-For an idealized M/M/1 queue with Poisson arrivals, exponential service, and $$\lambda<\mu$$, mean residence time is $$1/(\mu-\lambda)$$. Real applications often violate those assumptions. The model illustrates sensitivity near saturation; it is not a production tail-latency prediction.
+Batching adds waiting while amortizing overhead. Offered load and p50/p95/p99, with adequate samples, expose effects that closed-loop request/response benchmarks can hide.
 
-Batching amortizes fixed overhead but adds waiting. Benchmark at realistic offered load and report both p50 and p95/p99 when the sample budget supports them. A closed-loop benchmark that waits for each response may underrepresent queue buildup under external arrivals.
+<div id="9-a-practical-decision-record"></div>
 
-## 8. API choices and correctness costs
+## API costs
+{: id="8-api-choices-and-correctness-costs"}
 
-Bulk APIs can avoid repeated parsing, validation, and synchronization. They also change cancellation, partial failure, and ownership behavior. A shared buffer reduces copying only if callers understand how long it is valid. A move transfers ownership; it is not automatically free for every type or operation.
-
-Before adopting a performance change, identify: preserved observable results, ordering guarantees, exception or error behavior, ownership lifetime, and concurrent access rules. Measure regressions on small inputs and infrequent paths as well as the hot case. A large gain with a subtle invalidation bug is not a completed optimization.
-
-## 9. A practical decision record
-
-Record the bottleneck hypothesis, baseline profile, change, representative results, uncertainty, and maintenance cost. Keep the smallest clear change that meets the workload's goal. If an optimization changes only a tiny portion of total time, explain that limitation rather than presenting the microbenchmark ratio as application speedup.
-
-Current tool versions and hardware rates can change. Recheck profiler and compiler documentation for the environment, and measure local constants instead of reusing famous latency tables as precise facts.
+Bulk operations reduce repeated parsing, validation, and synchronization but change cancellation, partial failure, and ownership. Shared buffers have validity periods; moving an object is not universally free. A valid optimization preserves results, ordering, error behavior, lifetimes, and concurrent-access rules, including small inputs and infrequent paths. Its decision record connects the bottleneck, profile, measured gain, uncertainty, and maintenance cost; microbenchmark ratios do not establish application speedup. Compiler/profiler versions and local hardware rates belong to that evidence.
 
 ## References
+{: id="references"}
 
 - [Dean and Ghemawat, Performance Hints](https://abseil.io/fast/hints.html).
 - [C++ Core Guidelines](https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines).
-- [Google Benchmark](https://github.com/google/benchmark): tooling for repeatable microbenchmarks.
-- [Abseil performance notes](https://abseil.io/fast/): current engineering discussions and measurement caveats.
+- [Google Benchmark](https://github.com/google/benchmark).
+- [Abseil performance notes](https://abseil.io/fast/).

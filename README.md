@@ -42,11 +42,14 @@ sources_checked_at: 2026-10-11
 ---
 ```
 
-Start with an accessible summary and reading path. Define notation and assumptions
-before derivations. Identify illustrative calculations, author-reported results,
-and locally measured results separately. Link primary papers, official docs, or
-pinned implementation revisions near the claims they support. Update the
-source-check date only after checking the relevant evidence.
+Use a short topic title and a direct introductory paragraph. Keep the subtitle
+to one brief listing description; the article opens with its own explanation.
+Use descriptive section headings, define notation before derivations, and place
+each result's assumptions and limits beside it. Avoid reading guides, repeated
+summary labels, and generic warnings. Distinguish illustrative calculations,
+author-reported results, and local measurements. Link primary sources near the
+claims they support. An editorial revision changes `last_modified_at`, not
+`sources_checked_at`; advance the latter only after rechecking the evidence.
 
 ### English and Korean
 

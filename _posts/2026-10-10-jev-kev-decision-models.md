@@ -2,96 +2,83 @@
 lang: en
 translation_key: 2026-10-10-jev-kev-decision-models
 translation_url: /ko/2026/10/10/jev-kev-decision-models.html
-title: "Jev and Kev: Decision Models, Calibrated Probabilities, and Open-Source Deployment"
+title: "Jev and Kev"
 tags: ["machine-learning", "decision-models", "calibration", "open-source", "engineering"]
-subtitle: "From categorical probability and decision theory to Jev\u2019s typed API, Kev\u2019s pointer head, benchmarks with stated measurement conditions, and a reproducible local workflow."
-last_modified_at: 2026-10-11
+subtitle: "Probability outputs, calibration, decision losses, and the open Kev implementation."
+last_modified_at: 2026-10-29
 sources_checked_at: 2026-10-11
 ---
 
-> **The idea in one minute.** Jev answers questions about supplied information with a finite probability distribution rather than a generated paragraph. Kev provides an open implementation of this decision-model pattern. A routing system can use the distribution to choose an action or request review. The difficult part is establishing what the probabilities mean on your data, how errors cost money or time, and whether the measurements transfer to your deployment.
+Jev returns probability distributions over bounded decisions rather than generated explanations. Kev implements a similar interface with open weights. Their usefulness depends on calibrated probabilities, operational labels, and the loss attached to each action.
 
-**Reading path.** Sections 1–4 introduce the API and probability language. Sections 5–7 develop calibration and decision theory. Sections 8–10 explain the open implementation and reported measurements. Sections 11–13 give a local workflow, training design, and alternatives. You need elementary algebra first; the later sections introduce vectors, expectation, and logarithms as they become necessary.
+## Decision distributions
+{: id="1-what-problem-does-a-decision-model-solve"}
 
-**Date and evidence.** Published October 10, 2026; references checked October 11. To make the dated open-source examples reproducible, Kev is pinned to [`fc4a17e`](https://github.com/jaredpalmer/kev/tree/fc4a17e194bca35a48c57211392ec49ea54a94ac), a revision available by the end of October 10 in Korea. API documentation is a live reference and can change. Reported benchmarks below belong to their authors; this article does not claim to have run Jev or Kev inference.
-
-## 1. What problem does a decision model solve?
-
-Suppose a support ticket says: “I was charged twice. Please refund the duplicate charge.” We might ask which team should handle it, whether urgent review is needed, and how severe the problem is. These are bounded decisions. A paragraph can explain a judgment, but production code ultimately needs a label, a numerical score, or a yes/no value.
-
-Let $$x$$ denote the supplied **state**, $$q$$ the question and instructions, and $$C=(c_1,\ldots,c_K)$$ the candidate descriptions. A conditional classifier returns
+A ticket about a duplicate charge might need a team label, urgency score, or yes/no decision. For supplied state $$x$$, instructions $$q$$, and candidate descriptions $$C=(c_1,\ldots,c_K)$$, a classifier returns
 
 $$
 p_\theta(y=k\mid x,q,C),\qquad p_k\ge0,\qquad\sum_{k=1}^{K}p_k=1.
 $$
 
-Here $$\theta$$ denotes learned parameters. The output is a point in the probability simplex $$\Delta^{K-1}$$. If an ordinary generative language model produces $$M$$ tokens, its sequence likelihood factorizes as
+Learned parameters $$\theta$$ map the input to the simplex $$\Delta^{K-1}$$. A generative model producing $$M$$ tokens instead factorizes
 
 $$
 p_\theta(t_{1:M}\mid x)=\prod_{j=1}^{M}p_\theta(t_j\mid x,t_{1:j-1}).
 $$
 
-A decision model targets the finite decision directly. This removes the need to generate a long answer and parse it. It still processes input tokens, forms contextual representations, and computes output scores. “No generated explanation” does not imply zero inference work or a proof that the decision is correct.
+Direct decisions avoid answer generation and parsing, but still require input processing and scoring; they do not establish correctness. [TypeSafe](https://docs.typesafe.ai/introduction) presents Jev as a hosted System One model trained with Reinforcement Learning for Calibrated Decisions (RLCD). Its [release article](https://typesafe.ai/blog/introducing-system-one-models-and-jev) does not establish a complete public training set, architecture, weights, or reproducible original recipe. Community implementations do not reveal those internals.
 
-[TypeSafe's introduction](https://docs.typesafe.ai/introduction) presents Jev as its hosted System One model. Its release material calls the training approach **Reinforcement Learning for Calibrated Decisions (RLCD)**. The complete training data, weights, architecture, and reproducible original recipe are not publicly established by these documents. A community implementation of a similar interface is evidence about that implementation, rather than proof of Jev's internal computation. See [the official introduction article](https://typesafe.ai/blog/introducing-system-one-models-and-jev).
+<div id="3-why-an-option-probability-is-conditional"></div>
 
-## 2. Three primitives: Choice, Noul, and Score
+## Outputs
+{: id="2-three-primitives-choice-noul-and-score"}
 
-| Primitive | Mathematical output | Suitable question | Main interpretation risk |
-|---|---|---|---|
-| Choice | Distribution on $$K$$ unordered options | Which team: billing, shipping, or account access? | The true answer may be outside the option set |
-| Noul | Probability $$p$$ of “yes” | Does this ticket mention a duplicate charge? | A threshold is a policy choice |
-| Score | Distribution on ordered levels and its mean index | Low, normal, or high urgency? | Ordered labels do not imply equally spaced real-world severity |
+| Primitive | Output | Interpretation |
+|---|---|---|
+| Choice | Distribution over $$K$$ unordered options | The correct class may be absent |
+| Noul | Probability $$p$$ of “yes” | The action threshold depends on loss |
+| Score | Distribution over ordered levels and mean index | Ordering alone does not establish equal severity intervals |
 
-For Choice, the selected option usually maximizes probability:
+Choice usually selects
 
 $$
 \widehat y=\operatorname*{arg\,max}_{k}p_k.
 $$
 
-For Noul, interpret the two outcomes as $$(1-p,p)$$. A $$0.5$$ threshold minimizes symmetric binary misclassification loss **if** $$p$$ is the true posterior. Different costs give a different threshold, derived below.
-
-For Score, number $$K$$ ordered levels $$0,\ldots,K-1$$. The returned mean is
+Noul represents $$(1-p,p)$$. Threshold $$0.5$$ minimizes symmetric binary misclassification loss only if $$p$$ is the true posterior. For $$K$$ ordered Score levels $$0,\ldots,K-1$$,
 
 $$
 \overline s=\sum_{i=0}^{K-1}i\,p_i.
 $$
 
-For $$(p_0,p_1,p_2)=(0,0.57,0.43)$$, this gives $$1.43$$. It is not a fourth label between levels 1 and 2. It is the mean of a distribution under the chosen numerical encoding. Replacing the encoding $$(0,1,2)$$ with $$(0,1,10)$$ changes the mean; ordinal information alone cannot justify the original spacing. Keep the full distribution when real costs are nonlinear. The [Choice](https://docs.typesafe.ai/primitives/choice), [Noul](https://docs.typesafe.ai/primitives/noul), and [Score](https://docs.typesafe.ai/primitives/score) documentation define the request and response fields.
+Thus $$(p_0,p_1,p_2)=(0,0.57,0.43)$$ gives $$1.43$$, a mean under the encoding rather than another label. Replacing $$(0,1,2)$$ with $$(0,1,10)$$ changes it. Nonlinear costs require the full distribution ([Choice](https://docs.typesafe.ai/primitives/choice), [Noul](https://docs.typesafe.ai/primitives/noul), [Score](https://docs.typesafe.ai/primitives/score)).
 
-A request may ask several questions about one state. Questions are evaluated without reading one another's answers. This computational separation does **not** imply that their target labels are statistically independent. Duplicate billing and customer frustration can be correlated even when their model branches cannot communicate.
-
-## 3. Why an option probability is conditional
-
-If we remove “billing” from the candidate set, a classifier must distribute its mass among the remaining choices. A high resulting maximum can be a confident wrong answer. In particular,
+Removing “billing” forces mass onto the remaining options, possibly yielding a high-confidence error. In general,
 
 $$
 p(y=k\mid x,q,C)\ne p(y=k\mid x,q,C')
 $$
 
-in general when $$C\ne C'$$. Adding a “none of these / insufficient evidence” option can represent an important missing outcome, but does not guarantee that the model recognizes every unfamiliar input.
+when $$C\ne C'$$. An “insufficient evidence” option represents a missing outcome without guaranteeing unfamiliar-input detection. Operational descriptions must resolve mixed intents: single Choice selects one winner, whereas separate Nouls describe marginal properties.
 
-Make candidate descriptions operational. “Billing” could mean invoices, payments, duplicate charges, and refunds; specify how mixed tickets should be routed. Decide whether the task is single-label or multi-label. If both billing and shipping are true, a single Choice forces one winner. Separate Nouls can model individual properties, although their marginal probabilities do not specify a joint distribution.
-
-For example, if $$\Pr(A)=0.8$$ and $$\Pr(B)=0.7$$, their intersection satisfies the Fréchet bounds
+Questions do not read one another's answers, but their labels can remain statistically dependent. If $$\Pr(A)=0.8$$ and $$\Pr(B)=0.7$$, Fréchet bounds give
 
 $$
 0.5=\max(0,0.8+0.7-1)\le \Pr(A\cap B)\le\min(0.8,0.7)=0.7.
 $$
 
-The value $$0.56$$ follows only from an additional independence assumption. Multiplying independent *model calls* is not a justification for that assumption.
+The product $$0.56$$ needs label independence; separate model calls do not supply it.
 
-## 4. Confidence is a summary of the distribution
+## Confidence
+{: id="4-confidence-is-a-summary-of-the-distribution"}
 
-TypeSafe's [confidence specification](https://docs.typesafe.ai/confidence) defines the following statistics. For Choice, let $$K$$ be the number of options, with at least two options:
+The [API specification](https://docs.typesafe.ai/confidence) rescales the maximum Choice probability for $$K$$ options, at least two:
 
 $$
 c_{\mathrm{choice}}=\frac{p_{\max}-1/K}{1-1/K}.
 $$
 
-It maps a uniform distribution to 0 and a point mass to 1. For $$(0.6,0.3,0.1)$$, it is $$0.4$$. It is **not** an estimated probability of correctness. Noul returns $$p$$ directly; the analogous optional summary is $$\vert 2p-1\vert $$.
-
-For Score, take a mode $$m=\arg\max_i p_i$$ and define
+Uniform distributions map to 0 and point masses to 1; $$(0.6,0.3,0.1)$$ gives $$0.4$$. This is not correctness probability. Noul returns $$p$$; an analogous optional summary is $$\vert 2p-1\vert $$. For Score, a mode $$m=\arg\max_i p_i$$ gives
 
 $$
 \begin{aligned}
@@ -100,9 +87,7 @@ c_{\mathrm{score}}&=\max\left(0,1-\frac{\sum_i p_i\vert i-m\vert }{D_K}\right).
 \end{aligned}
 $$
 
-Use the implementation's tie convention for the mode. At $$K=3$$, $$D_K=2/3$$; $$(0,0.57,0.43)$$ has $$c_{\mathrm{score}}=0.355$$. The mean is still $$1.43$$.
-
-For Choice, the threshold conversion is an algebraic consequence:
+with implementation-specific tie handling. At $$K=3$$, $$D_K=2/3$$, so $$(0,0.57,0.43)$$ gives $$c_{\mathrm{score}}=0.355$$ while retaining mean $$1.43$$. Algebraically,
 
 $$
 c_{\mathrm{choice}}\ge t
@@ -110,11 +95,11 @@ c_{\mathrm{choice}}\ge t
 p_{\max}\ge\frac1K+t\left(1-\frac1K\right).
 $$
 
-Thus $$t=0.9$$ at $$K=3$$ requires $$p_{\max}\ge0.933\overline3$$. A confidence value cannot be substituted for $$p_{\max}$$ in a cost formula. Also, $$D_K=K/4$$ for even $$K$$, and $$D_K=(K^2-1)/(4K)$$ for odd $$K$$: both follow by pairing distances around the midpoint. The denominator is positive for $$K\ge2$$; the single-option case requires a separate convention.
+Hence $$t=0.9$$ at $$K=3$$ requires $$p_{\max}\ge0.933\overline3$$; confidence cannot replace $$p_{\max}$$ in a loss formula. Pairing midpoint distances gives $$D_K=K/4$$ for even $$K$$ and $$D_K=(K^2-1)/(4K)$$ for odd $$K$$. The denominator is positive for $$K\ge2$$; one option needs a separate convention.
 
 <div class="probability-explorer" data-probability-explorer>
-  <h3>Try a three-option distribution</h3>
-  <p>Change nonnegative weights. The example normalizes them into probabilities; it does not call a model. Use Choice for unordered labels, or Score for levels 0, 1, 2.</p>
+  <h3>Three-option distribution</h3>
+  <p>Nonnegative weights become probabilities without a model call. Choice treats labels as unordered; Score uses levels 0, 1, 2.</p>
   <div class="probability-controls">
     <label>Option / level 0 <input type="range" min="0" max="100" value="60" data-weight="0"></label>
     <label>Option / level 1 <input type="range" min="0" max="100" value="30" data-weight="1"></label>
@@ -125,19 +110,18 @@ Thus $$t=0.9$$ at $$K=3$$ requires $$p_{\max}\ge0.933\overline3$$. A confidence 
   <noscript><p>Initial values: probabilities (0.600, 0.300, 0.100), Choice confidence 0.400, mean level 0.500, Score confidence 0.250. Enable JavaScript to adjust the weights.</p></noscript>
 </div>
 
-## 5. Accuracy, calibration, and proper scoring rules
+## Calibration
+{: id="5-accuracy-calibration-and-proper-scoring-rules"}
 
-A model can be accurate and poorly calibrated. Suppose it predicts a top probability of $$0.95$$ for 1,000 comparable tickets but is right on only 800. Its accuracy on those tickets is $$0.8$$, while its probability estimates are too concentrated.
-
-Let $$Y$$ be the true class and $$P$$ the random predicted vector. **Top-label calibration** asks that, for probability values with support,
+A model assigning $$0.95$$ to 1,000 comparable tickets but answering only 800 correctly has accuracy $$0.8$$ and overconcentrated probabilities. With true class $$Y$$ and random prediction vector $$P$$, top-label calibration requires
 
 $$
 \Pr(Y=\widehat Y\mid P_{\max}=s)=s.
 $$
 
-Classwise calibration asks $$\Pr(Y=k\mid P_k=s)=s$$ for every class $$k$$. Full-vector calibration asks $$\Pr(Y=k\mid P)=P_k$$ almost surely; this is stronger than each marginal classwise condition. In continuous settings these are statements about conditional expectations, rather than ratios of counts in an exact singleton bin. Empirical bins approximate them.
+on supported probability values. Classwise calibration requires $$\Pr(Y=k\mid P_k=s)=s$$ for each $$k$$; full-vector calibration requires $$\Pr(Y=k\mid P)=P_k$$ almost surely and is stronger. These are conditional-expectation statements; finite bins approximate them rather than defining exact continuous-value frequencies.
 
-Accuracy discards every probability except the winning label. The multiclass negative log-likelihood and Brier score retain the distribution:
+Negative log-likelihood and Brier score retain probabilities discarded by accuracy:
 
 $$
 \mathrm{NLL}=-\frac1n\sum_{j=1}^{n}\log p_{j,y_j},
@@ -146,9 +130,7 @@ $$
 \left(p_{j,k}-\mathbf1\{y_j=k\}\right)^2.
 $$
 
-NLL is unbounded when the model assigns arbitrarily small mass to the correct label. This **full multiclass** Brier convention lies in $$[0,2]$$. Binary Brier is sometimes reported using only the positive probability, in $$[0,1]$$; the full two-component score is twice that value. Always record the convention before comparing numbers.
-
-To see why both are proper, fix an input with true conditional vector $$q$$ and prediction $$p$$. Then
+NLL is unbounded near zero probability for the true label. Full multiclass Brier lies in $$[0,2]$$; the positive-component binary convention lies in $$[0,1]$$ and is half the two-component score. For true vector $$q$$ and prediction $$p$$,
 
 $$
 \mathbb E_{Y\sim q}[-\log p_Y]=H(q)+D_{\mathrm{KL}}(q\Vert p),
@@ -161,83 +143,83 @@ $$
 =\|p-q\|_2^2+1-\|q\|_2^2.
 $$
 
-The second identity follows by expanding the square and using $$\mathbb E[\mathbf1\{Y=k\}]=q_k$$. Both expectations are minimized at $$p=q$$. This is a population result under the stated distribution, not a promise that minimizing a finite training loss calibrates an unfamiliar domain.
+Expanding the square with $$\mathbb E[\mathbf1\{Y=k\}]=q_k$$ shows both are minimized at $$p=q$$. This population property does not guarantee calibration from finite training or under domain shift.
 
-### Why rewarding the winning label is insufficient
+### Proper rewards
+{: id="why-rewarding-the-winning-label-is-insufficient"}
 
-A simple bandit-style reward illustrates the difference. Suppose an action label $$A$$ is sampled from $$p$$ independently of the unknown label $$Y\sim q$$, conditional on the input. With reward $$\mathbf1\{A=Y\}$$,
+Conditional on an input, independently sample action $$A$$ from $$p$$ and truth $$Y\sim q$$. Correct-label reward $$\mathbf1\{A=Y\}$$ has expectation
 
 $$
 \mathbb E[R]=\sum_k p_kq_k.
 $$
 
-This is linear in $$p$$ and is maximized by putting all mass on a class with maximal $$q_k$$. At $$q=(0.6,0.4)$$, the deterministic $$p=(1,0)$$ earns expected reward $$0.6$$, whereas $$p=q$$ earns $$0.52$$. Maximizing this reward identifies a good discrete action but does not recover calibrated probabilities.
-
-By contrast, rewarding the whole distribution with negative Brier score has expected reward
+Linear dependence on $$p$$ favors a point mass at maximal $$q_k$$: with $$q=(0.6,0.4)$$, $$p=(1,0)$$ earns $$0.6$$ while $$p=q$$ earns $$0.52$$. Negative Brier reward instead gives
 
 $$
 \mathbb E[R(p,Y)]=-\|p-q\|_2^2-1+\|q\|_2^2,
 $$
 
-uniquely maximized at $$p=q$$. The distinction explains why a training objective for probabilistic decisions must care about more than whether the most likely label wins. It is an illustrative objective comparison, **not a disclosure of Jev's RLCD reward or training algorithm**. Supervised cross-entropy is already a proper objective; reinforcement learning is one possible optimization framework, not a prerequisite for producing calibrated distributions.
+uniquely maximized at $$p=q$$. These illustrate objectives, not Jev's undisclosed RLCD reward. Supervised cross-entropy is already proper; reinforcement learning is not required for calibration.
 
-A binned expected calibration error is
+Binned expected calibration error is
 
 $$
 \mathrm{ECE}=\sum_{b=1}^{B}\frac{\vert I_b\vert }{n}
 \left\vert \mathrm{acc}(I_b)-\mathrm{conf}(I_b)\right\vert .
 $$
 
-For a top-label ECE, `conf` means mean **top probability**, not the API's rescaled confidence. Results depend on binning and sample size; different errors can cancel within a bin. Report a reliability diagram, NLL, Brier, and class or workload slices alongside ECE.
+where top-label `conf` is mean top probability, not rescaled API confidence. Binning and sample size affect ECE, and within-bin errors can cancel; reliability diagrams, proper scores, and workload slices expose different errors.
 
-### Temperature scaling
+### Temperature
+{: id="temperature-scaling"}
 
-Given logits $$z_1,\ldots,z_K$$, temperature $$\tau>0$$ gives
+Logits $$z_1,\ldots,z_K$$ and temperature $$\tau>0$$ define
 
 $$
 p_k^{(\tau)}=\frac{\exp(z_k/\tau)}{\sum_{i=1}^{K}\exp(z_i/\tau)}.
 $$
 
-Fit $$\tau$$ by minimizing NLL on a held-out calibration split. Increasing $$\tau$$ softens the distribution; decreasing it sharpens it. A positive temperature preserves the argmax **within each example**, so it cannot fix classification errors. In multiclass problems it can change the ordering of maximum probabilities **across different examples**, because the entire logit vector participates in normalization. Do not assume every selective-coverage curve is invariant.
+Fitting $$\tau$$ minimizes held-out calibration NLL; increasing $$\tau$$ softens predictions and decreasing it sharpens them. Positive temperature preserves each example's argmax, not the ordering of maxima across examples, so classification errors persist while multiclass risk/coverage curves may change. The fitted value depends on model and distribution ([Guo et al.](https://proceedings.mlr.press/v70/guo17a.html)); a changed domain needs new labeled calibration evidence.
 
-[Guo et al., On Calibration of Modern Neural Networks](https://proceedings.mlr.press/v70/guo17a.html) studies temperature scaling. The fitted temperature is specific to a model and calibration distribution. Refitting after a domain change requires new labeled evidence; a shipped temperature is a starting point.
+## Loss and actions
+{: id="6-derive-the-action-from-its-loss"}
 
-## 6. Derive the action from its loss
-
-Let $$L(a,y)$$ be the cost of action $$a$$ when the truth is $$y$$. Under a calibrated posterior, the Bayes action minimizes conditional expected loss:
+For loss $$L(a,y)$$ of action $$a$$ under truth $$y$$, the Bayes action under a calibrated posterior is
 
 $$
 a^*(x)=\operatorname*{arg\,min}_a\sum_y L(a,y)p(y\mid x).
 $$
 
-For a binary decision, let a false positive cost $$C_{\mathrm{FP}}>0$$ and a false negative cost $$C_{\mathrm{FN}}>0$$, with correct decisions costing zero. Acting positive has risk $$C_{\mathrm{FP}}(1-p)$$; acting negative has risk $$C_{\mathrm{FN}}p$$. Hence
+With false-positive cost $$C_{\mathrm{FP}}>0$$, false-negative cost $$C_{\mathrm{FN}}>0$$, and zero correct-decision cost, the risks are $$C_{\mathrm{FP}}(1-p)$$ and $$C_{\mathrm{FN}}p$$:
 
 $$
 \text{choose positive iff}\quad
 p\ge\frac{C_{\mathrm{FP}}}{C_{\mathrm{FP}}+C_{\mathrm{FN}}}.
 $$
 
-If $$C_{\mathrm{FP}}=9$$ and $$C_{\mathrm{FN}}=1$$, the threshold is $$0.9$$. If missing an urgent ticket costs nine times more than reviewing a normal one, interchange the costs and the threshold becomes $$0.1$$. Neither follows from a universal confidence cutoff.
+Costs $$C_{\mathrm{FP}}=9$$ and $$C_{\mathrm{FN}}=1$$ yield threshold $$0.9$$. Reversing them for expensive missed urgency yields $$0.1$$; neither is a universal confidence cutoff.
 
-For multiclass routing, suppose every wrong route costs $$C_w$$ and every correct route costs zero. The risk of the best automatic route is $$C_w(1-p_{\max})$$. If a **perfect** reviewer costs $$C_r$$ per case, choose automatic routing when
+For uniformly wrong-route cost $$C_w$$, the best automatic risk is $$C_w(1-p_{\max})$$. A perfect reviewer costing $$C_r$$ makes automation preferable when
 
 $$
 p_{\max}\ge1-\frac{C_r}{C_w}.
 $$
 
-With $$C_w=10$$ and $$C_r=1$$, the probability threshold is $$0.9$$, which corresponds to Choice confidence $$0.85$$ at $$K=3$$. Real reviewers are not perfect: add their residual error cost and waiting cost before making the comparison. If wrong routes have different consequences, use the full loss matrix rather than its uniform-cost simplification.
+With $$C_w=10$$ and $$C_r=1$$, threshold $$0.9$$ equals Choice confidence $$0.85$$ at $$K=3$$. Real review adds residual errors and waiting; nonuniform consequences require the full loss matrix.
 
-For ordered scores, squared-error loss is minimized by the conditional mean; absolute-error loss is minimized by a conditional median. To derive the first result, expand
+For ordered scores, squared loss selects the conditional mean because
 
 $$
 \mathbb E[(a-Y)^2\mid x]=(a-\mathbb E[Y\mid x])^2+\operatorname{Var}(Y\mid x).
 $$
 
-The variance term does not depend on $$a$$. This explains the mathematical usefulness of the mean score while exposing the assumption that numeric level distances carry the intended meaning.
+has a variance term independent of $$a$$. Absolute loss selects a conditional median. Both interpretations require meaningful numerical level distances.
 
-## 7. Measure coverage and residual risk
+## Coverage
+{: id="7-measure-coverage-and-residual-risk"}
 
-For an acceptance rule $$A_t=\mathbf1\{s(x)\ge t\}$$, define
+For acceptance rule $$A_t=\mathbf1\{s(x)\ge t\}$$,
 
 $$
 \mathrm{coverage}(t)=\Pr(A_t=1),
@@ -245,9 +227,7 @@ $$
 \mathrm{risk}(t)=\Pr(\widehat Y\ne Y\mid A_t=1).
 $$
 
-Risk is undefined when no cases are accepted. The useful deployment question is often “what fraction can we automate while keeping accepted-case error below $$\epsilon$$?” Plot risk against coverage on untouched evaluation data, and report accepted counts. High overall accuracy can hide substantial risk in one language or a new routing category.
-
-For a fixed threshold and $$n_a$$ independent, identically distributed accepted test cases with binary error indicators, Hoeffding's bound gives
+Risk is undefined at zero acceptance. Error below $$\epsilon$$ must be assessed with accepted counts and language/category slices, not overall accuracy alone. At a fixed threshold with $$n_a$$ independent, identically distributed (iid) accepted test cases and binary errors, Hoeffding gives
 
 $$
 \Pr(R>\widehat R+\eta)\le e^{-2n_a\eta^2},
@@ -255,19 +235,18 @@ $$
 \eta=\sqrt{\frac{\log(1/\delta)}{2n_a}}.
 $$
 
-This supplies a one-sided upper bound at confidence $$1-\delta$$, subject to the independence and sampling assumptions. If no errors occur, the exact binomial one-sided upper limit is
+a one-sided bound at confidence $$1-\delta$$. Zero errors give exact binomial upper limit
 
 $$
 R_{\mathrm{upper}}=1-\delta^{1/n_a}.
 $$
 
-At $$\delta=0.05$$ and $$n_a=100$$, it is approximately $$0.0295$$. Zero observed errors do not establish zero risk. The familiar “three over $$n$$” approximation follows from $$-\log(0.05)\approx3$$.
+At $$\delta=0.05$$ and $$n_a=100$$, the limit is $$0.0295$$, not zero. “Three over $$n$$” uses $$-\log(0.05)\approx3$$. Threshold search belongs on development data; reusing the test set invalidates this fixed-threshold guarantee. Customer clusters, temporal drift, and duplicates also weaken iid assumptions.
 
-Choose thresholds on development data; then estimate final risk once on a separate test set. Searching many thresholds on that same test set invalidates the naive fixed-threshold guarantee. Customer-level clustering, temporal drift, and repeated near-duplicate tickets also weaken an iid argument; split by the unit that will change in production and report that unit.
+## Kev
+{: id="8-what-the-open-kev-implementation-actually-computes"}
 
-## 8. What the open Kev implementation actually computes
-
-[Kev's pinned source](https://github.com/jaredpalmer/kev/blob/fc4a17e194bca35a48c57211392ec49ea54a94ac/kev/model.py) makes its architecture inspectable. It encodes the state, question, candidate descriptions, and a decision marker. Let $$h_d\in\mathbb R^d$$ be the decision representation and $$h_i\in\mathbb R^d$$ an option representation. Its learned pointer head applies affine projections
+Kev is pinned to [`fc4a17e`](https://github.com/jaredpalmer/kev/tree/fc4a17e194bca35a48c57211392ec49ea54a94ac), available by October 10, 2026 in Korea. Its [pointer head](https://github.com/jaredpalmer/kev/blob/fc4a17e194bca35a48c57211392ec49ea54a94ac/kev/model.py) projects decision representation $$h_d\in\mathbb R^d$$ and option representation $$h_i\in\mathbb R^d$$:
 
 $$
 \begin{aligned}
@@ -277,27 +256,25 @@ z_i&=\frac{v_i^\top u}{\sqrt{d_p}}.
 \end{aligned}
 $$
 
-then a temperature-scaled softmax. Here $$d_p$$ is the projection dimension, not the number of options. This produces an option-index distribution; it is not a fixed vocabulary-generation head. Candidate descriptions can therefore change between requests.
+Temperature-scaled softmax yields option-index probabilities. Projection dimension $$d_p$$ is not the option count; descriptions can change between requests. Projection work $$O((K+1)dd_p)$$ and dot-product work $$O(Kd_p)$$ exclude the usually dominant backbone.
 
-The head's projection work is $$O((K+1)dd_p)$$ and dot-product work is $$O(Kd_p)$$. Those bounds exclude the backbone, which normally dominates. Choosing fewer options does not remove the state-encoding cost.
+### Shared state
+{: id="shared-state-and-separate-branches"}
 
-### Shared state and separate branches
-
-For a pure attention backbone, a conceptual block-causal layout allows question branches to read a common state prefix but blocks access to sibling questions. With state length $$S$$, branch lengths $$Q_1,\ldots,Q_m$$, allowed attention-pair work has the form
+A conceptual pure-attention block-causal mask lets each question read state length $$S$$ but not sibling branches $$Q_1,\ldots,Q_m$$. A mask-exploiting implementation has allowed-pair work
 
 $$
 O\left(S^2+\sum_{j=1}^{m}(SQ_j+Q_j^2)\right)
 $$
 
-under an implementation that exploits the mask. A dense masked kernel may still compute disallowed pairs; a mask alone is not a speedup proof. In the open source, packed pure-attention inputs also have a token-length guard.
+Dense masking may still compute blocked pairs; the mask alone proves no speedup. Packed pure-attention inputs also have a token-length guard.
 
-Current Kev-0.8B, 4B, and 9B use Qwen3.5 base models with LoRA adapters and a pointer head. Their hybrid attention/recurrent layers cannot simply honor the same packed attention mask. The code chooses separate causal rows, can reuse a shared prefix, and clones recurrent state for independent continuations. It also sanitizes reserved marker spellings in caller text. These are concrete implementation details; they do not establish universal immunity to semantic prompt injection.
+The pinned 0.8B/4B/9B models use Qwen3.5, LoRA, and a pointer head. Hybrid attention/recurrent layers instead use separate causal rows, shared-prefix reuse, and cloned recurrent states. Reserved-marker sanitization does not guarantee protection from semantic prompt injection. The 27B model uses post-trained Qwen3.8 and full-weight tuning; base, size, and recipe all change, preventing a parameter-count-only ablation ([model cards](https://github.com/jaredpalmer/kev/tree/fc4a17e194bca35a48c57211392ec49ea54a94ac/docs/model-cards)).
 
-Kev-27B uses a post-trained Qwen3.8 base and full-weight fine-tuning. It differs in base, size, and training configuration, so a comparison with smaller Kev models is not a controlled ablation of parameter count alone. The [pinned README and model cards](https://github.com/jaredpalmer/kev/tree/fc4a17e194bca35a48c57211392ec49ea54a94ac/docs/model-cards) document the released recipes.
+### Label likelihoods
+{: id="compare-with-a-language-model-label-baseline"}
 
-### Compare with a language-model label baseline
-
-A next-token baseline can restrict a generative model to single-token label IDs and normalize their logits. This is a useful comparator, not automatically a calibrated decision model. For multi-token label strings $$\ell_k$$, compute their full conditional sequence log-likelihoods, including an appropriate boundary convention:
+A generative baseline can normalize logits for single-token labels. Multi-token strings $$\ell_k$$ require complete conditional likelihoods and a boundary convention:
 
 $$
 a_k=\log p_\theta(\ell_k\mid x,q),
@@ -305,11 +282,12 @@ a_k=\log p_\theta(\ell_k\mid x,q),
 \widetilde p_k=\frac{e^{a_k}}{\sum_i e^{a_i}}.
 $$
 
-This is a conditional distribution over the selected strings, not necessarily over semantic classes: length, spelling, tokenization, and synonymous realizations matter. [LLM-as-Jev](https://arxiv.org/abs/2610.02076) studies training language models for direct probabilistic decisions. Its results support investigating this baseline; they do not identify Jev's proprietary architecture.
+This distributes mass over strings, not necessarily semantic classes; length, tokenization, spelling, and synonyms matter. [LLM-as-Jev](https://arxiv.org/abs/2610.02076) studies direct probabilistic decisions without identifying Jev's proprietary architecture.
 
-## 9. Read performance tables without changing their meaning
+## Measurements
+{: id="9-read-performance-tables-without-changing-their-meaning"}
 
-The following values are **Kev-maintainer measurements** for `transfer-v4` (656 questions in each development/test panel), taken from the pinned model cards. The cards describe evaluation sources and policy rules absent from Kev training. Development data selects checkpoints; test data is reported separately.
+The pinned cards report maintainer measurements for `transfer-v4`, with 656 questions per development/test panel. They describe sources and policies absent from Kev training; development selects checkpoints. These are reported results, not local inference measurements.
 
 | Model | New-source accuracy, dev | New-source accuracy, test | Full Brier, dev | Full Brier, test |
 |---|---:|---:|---:|---:|
@@ -319,13 +297,14 @@ The following values are **Kev-maintainer measurements** for `transfer-v4` (656 
 | Kev-27B v2 | 0.851 | 0.889 | 0.218 | 0.154 |
 | Jev | 0.857 | Not reported | 0.211 | Not reported |
 
-Sources: [0.8B card](https://github.com/jaredpalmer/kev/blob/fc4a17e194bca35a48c57211392ec49ea54a94ac/docs/model-cards/kev-0.8b.md), [4B card](https://github.com/jaredpalmer/kev/blob/fc4a17e194bca35a48c57211392ec49ea54a94ac/docs/model-cards/kev-4b.md), [9B card](https://github.com/jaredpalmer/kev/blob/fc4a17e194bca35a48c57211392ec49ea54a94ac/docs/model-cards/kev-9b.md), and [27B card](https://github.com/jaredpalmer/kev/blob/fc4a17e194bca35a48c57211392ec49ea54a94ac/docs/model-cards/kev-27b.md). **Source discrepancy:** the overview README at the same revision lists different Brier values, for example 0.269 / 0.242 for 4B. This table follows the detailed model cards; the discrepancy is not independently resolved by rerunning their evaluation.
+Sources: [0.8B](https://github.com/jaredpalmer/kev/blob/fc4a17e194bca35a48c57211392ec49ea54a94ac/docs/model-cards/kev-0.8b.md), [4B](https://github.com/jaredpalmer/kev/blob/fc4a17e194bca35a48c57211392ec49ea54a94ac/docs/model-cards/kev-4b.md), [9B](https://github.com/jaredpalmer/kev/blob/fc4a17e194bca35a48c57211392ec49ea54a94ac/docs/model-cards/kev-9b.md), [27B](https://github.com/jaredpalmer/kev/blob/fc4a17e194bca35a48c57211392ec49ea54a94ac/docs/model-cards/kev-27b.md). The same-revision overview instead lists, for example, 4B Brier 0.269 / 0.242. This table follows the detailed cards; no independent rerun resolves that discrepancy.
 
-The valid same-split comparison is Kev-27B development accuracy $$0.851$$ versus Jev $$0.857$$, a difference of $$0.006$$ or **0.6 percentage points**. Comparing Kev's $$0.889$$ test accuracy with Jev's $$0.857$$ development accuracy would change the question. Jev's training data is unknown; contamination is not ruled out for either model by this table. Sample sizes, dependence, paired predictions, and evaluation design determine statistical significance; rounded aggregate scores alone cannot establish it.
+The same-split comparison is Kev-27B dev $$0.851$$ versus Jev $$0.857$$: $$0.006$$, or 0.6 percentage points. Kev test $$0.889$$ versus Jev dev $$0.857$$ mixes splits. Unknown Jev training data and these aggregate scores exclude neither contamination nor dependence; statistical significance needs evaluation design, sample sizes, and paired predictions.
 
-Kev's validated context is 8,192 tokens for 0.8B, 4B, and 9B, and 65,536 for 27B. This means the documentation's CUAD accuracy criterion remained within three percentage points of the same model's 8k result at the stated lower confidence bound. It is narrower than a guarantee on arbitrary documents. A server accepting 65k tokens does not prove that every checkpoint retains its short-context accuracy there.
+Validated contexts are 8,192 tokens for 0.8B/4B/9B and 65,536 for 27B: the stated lower-confidence-bound CUAD criterion stays within three percentage points of each model's 8k result. Accepted server input length does not guarantee arbitrary-document accuracy.
 
-### Latency and throughput have different denominators
+### Serving
+{: id="latency-and-throughput-have-different-denominators"}
 
 | Model / GPU | Short input, new / same state, ms | About 2,200 tokens, new / same state, ms | Requests/s, 64 clients |
 |---|---:|---:|---:|
@@ -334,48 +313,49 @@ Kev's validated context is 8,192 tokens for 0.8B, 4B, and 9B, and 65,536 for 27B
 | Kev-4B / H100 | 18.1 / 12.9 | 89.4 / 22.5 | 100.8 |
 | Kev-9B v1 / H100 | 24.0 / 16.6 | 88.5 / 26.4 | 79.5 |
 
-Sources: the [0.8B](https://github.com/jaredpalmer/kev/blob/fc4a17e194bca35a48c57211392ec49ea54a94ac/docs/model-cards/kev-0.8b.md), [4B](https://github.com/jaredpalmer/kev/blob/fc4a17e194bca35a48c57211392ec49ea54a94ac/docs/model-cards/kev-4b.md), and [9B serving sections](https://github.com/jaredpalmer/kev/blob/fc4a17e194bca35a48c57211392ec49ea54a94ac/docs/model-cards/kev-9b.md). The 9B latency was measured on **v1**, whose architecture/adapter shape matches v2; it is not a fresh v2 timing result. Short requests contain six questions; long requests contain five. Latencies are medians of 20 server-side measurements and exclude network time. “Same state” allows prefix reuse; it is not a cold-start measurement. Throughput uses concurrent short-input requests with new states. Its reciprocal is not the median latency of one request under another load.
+The [0.8B](https://github.com/jaredpalmer/kev/blob/fc4a17e194bca35a48c57211392ec49ea54a94ac/docs/model-cards/kev-0.8b.md), [4B](https://github.com/jaredpalmer/kev/blob/fc4a17e194bca35a48c57211392ec49ea54a94ac/docs/model-cards/kev-4b.md), and [9B](https://github.com/jaredpalmer/kev/blob/fc4a17e194bca35a48c57211392ec49ea54a94ac/docs/model-cards/kev-9b.md) cards use 20 server-side measurements' medians, excluding network time; short/long requests contain six/five questions. The 9B timings are v1, not fresh v2 measurements, though architecture/adapter shape matches. Same-state requests reuse prefixes; throughput uses concurrent short requests with new states. Reciprocal throughput is not single-request median latency under another load.
 
-For comparison, an open-loop production latency study should specify model revision, dtype/quantization, hardware, state and branch token distributions, cache hits, batch size, concurrency, arrival process, warm-up, and p50/p95/p99. End-to-end cost includes input preparation, transport, queueing, inference, and policy execution. GPU cost per decision is
+An open-loop comparison needs revisions, dtype/quantization, hardware, state/branch lengths, cache hits, batching, concurrency, arrivals, warm-up, and p50/p95/p99. GPU cost per decision is
 
 $$
 \frac{\text{GPU price per hour}}{3600\times\text{sustained decisions per second}},
 $$
 
-only if the throughput and utilization assumptions actually hold. Idle capacity, replicas, downloads, and operations add costs.
+only at the assumed sustained throughput/utilization. End-to-end cost adds preparation, transport, queues, policy execution, idle capacity, replicas, downloads, and operations.
 
-### Jev latency and hosted cost
+<div id="what-independent-jev-results-establish"></div>
 
-The [official release article](https://typesafe.ai/blog/introducing-system-one-models-and-jev), checked October 11, reports end-to-end response times of 70–500 ms and input pricing of USD 0.042 per million tokens, with output tokens uncharged. These are vendor-reported figures and published pricing, not a universal latency guarantee or a matched measurement against the GPU table above. Its headline speed/cost ratios arise from particular workflow comparisons and should not be applied to every workload.
+### Hosted Jev
+{: id="jev-latency-and-hosted-cost"}
 
-For a billed input count $$N_{\mathrm{in}}$$ under that tariff, the token charge is
+The [release article](https://typesafe.ai/blog/introducing-system-one-models-and-jev), checked October 11, reports 70–500 ms end-to-end and USD 0.042/million input tokens, with free outputs. These vendor figures are not guarantees or a matched comparison with the GPU table. For billed input $$N_{\mathrm{in}}$$,
 
 $$
 \mathrm{charge}_{\mathrm{USD}}=0.042\,N_{\mathrm{in}}/10^6.
 $$
 
-Count the complete billable request under the API rules, rather than just the state text. Recheck current pricing, token accounting, rate limits, regional/network latency, and version availability before a cost estimate.
+The complete billable request, rate limits, versions, and regional/network conditions determine a current estimate; headline workflow ratios do not generalize.
 
-### What independent Jev results establish
+[Evaluating and Benchmarking Jev](https://arxiv.org/html/2609.37647v1) reports version 1.13.0 on 37 datasets, 346,009 requests, and API cost below USD 10, with strong classification and multilingual results. Dataset, prompt, version, and threshold conditions limit transfer to private tickets; public success does not establish exclusion from training.
 
-[Evaluating and Benchmarking Jev](https://arxiv.org/html/2609.37647v1) reports Jev 1.13.0 on 37 datasets, 346,009 requests, and an API cost below USD 10 for that study. It reports strong results on several standard classification tasks and broad multilingual coverage. Those are results for particular datasets, prompts, versions, and thresholds. Public benchmark success is not evidence that the training distribution excluded them, nor a guarantee for private tickets. Evaluate on your own held-out cases before choosing an automation policy.
+## Applications
+{: id="10-common-applications-and-their-failure-modes"}
 
-## 10. Common applications and their failure modes
-
-| Application | Suitable construction | What to test beyond accuracy |
+| Task | Construction | Main failure cases |
 |---|---|---|
-| Request or tool routing | Choice with explicit mutually exclusive routes | Unknown routes, mixed intent, action-specific costs |
-| Content-policy triage | Separate Nouls per operational rule | False negatives, adversarial text, policy revision |
-| Retrieval filtering | Noul for evidence relevance or ordered Score | Recall before filtering, long documents, cited evidence |
-| Workflow prioritization | Score with observable level descriptions | Ordinal loss, ranking stability, queue waiting cost |
-| Agent stopping | Noul for a precisely defined completion condition | Missing evidence, premature stops, loop behavior |
-| Local/private processing | Open weights with controlled serving | Data retention, logs, hardware, quality on the target language |
+| Routing | Choice with exclusive routes | Unknown routes, mixed intent, unequal costs |
+| Policy triage | Noul per rule | False negatives, adversarial text, revisions |
+| Retrieval filtering | Relevance Noul or ordered Score | Recall loss, long documents, unsupported evidence |
+| Prioritization | Score with observable levels | Ordinal loss, unstable ranking, waiting |
+| Agent stopping | Noul for explicit completion | Missing evidence, early stops, loops |
+| Private processing | Controlled open-weight serving | Retention, logs, hardware, target-language quality |
 
-A decision model can decide **which** tool is appropriate; a generative or deterministic component may still need to construct arguments. Do not turn a routing probability into permission to perform an action. Authentication, argument validation, and workflow rules are separate application responsibilities. Treat model output as an input to the policy whose loss you derived.
+Selecting a tool does not construct its arguments or authorize execution. Authentication, argument validation, and workflow rules remain application responsibilities.
 
-## 11. A reproducible local Kev workflow
+## Local inference
+{: id="11-a-reproducible-local-kev-workflow"}
 
-These commands follow the pinned project's interface. They are an installation example, not a claim of execution on the reader's hardware. Use Python 3.12 or 3.13 and [uv](https://docs.astral.sh/uv/). The PyPI package named `kev` is a different project; install this model implementation from its repository.
+The pinned interface uses Python 3.12/3.13 and [uv](https://docs.astral.sh/uv/); PyPI's `kev` is unrelated. This installation example is not a hardware execution result:
 
 ```sh
 git clone https://github.com/jaredpalmer/kev.git
@@ -386,9 +366,7 @@ uv run --extra serve python -m kev.serve \
   --run jaredpalmer/kev-4b@v1.0 --port 8009
 ```
 
-Pin both serving code and model weights; the release's `v1.0` Hub tag identifies the checkpoint family. For archival reproduction, record the resolved full Hub commit and file hashes too. The first start downloads the base model and adapter. Select an explicit supported device when silent CPU fallback would invalidate a latency comparison.
-
-A request uses a common state and a map of questions:
+The Hub `v1.0` tag identifies a checkpoint family; archival reproduction also needs its resolved commit and hashes. First startup downloads the base and adapter. Explicit device selection avoids silent CPU fallback in GPU comparisons. A state with several questions is submitted as follows:
 
 ```python
 import json
@@ -435,59 +413,41 @@ answer = result["answers"]["team"]
 print(answer["choice"], answer["probabilities"], answer["confidence"])
 ```
 
-The request includes four options, so its confidence conversion uses $$K=4$$, not the earlier three-option example. No numerical response is invented here. A locally hosted endpoint and a hosted Jev endpoint have different model selectors, authentication, limits, and privacy arrangements; consult the [current API](https://docs.typesafe.ai/api) when switching. API compatibility does not make two models' probability values interchangeable.
+Four options mean $$K=4$$ for confidence conversion. Local Kev and hosted Jev differ in model selectors, authentication, limits, and privacy ([API](https://docs.typesafe.ai/api)); compatible schemas do not make probabilities interchangeable. Reproducible records retain revisions, criteria, raw probabilities, timing scope, acceptance, and eventual labels. Sensitive input needs a retention policy; cache keys need every output-affecting input, including state, question, option order, model, and temperature.
 
-Persist the model and code revision, prompt/criteria version, raw distribution, latency scope, acceptance decision, and eventual label. If input text is sensitive, design logging and retention before collecting it. A cache key must cover all inputs that affect the output, including question text, option order, model, temperature, and state.
+## Fine-tuning
+{: id="12-fine-tuning-without-contaminating-the-evaluation"}
 
-## 12. Fine-tuning without contaminating the evaluation
+Operational labels and independent annotation distinguish task ambiguity from model error. Representative test frequencies, or explicit reweighting, matter. Training updates weights; development selects checkpoints; calibration fits temperature/thresholds; a separate test evaluates the final pipeline. Grouping by customer, document, or time prevents leakage. Cross-validation can economize labels without collapsing fitting and evaluation; same-recipe synthetic tests do not establish real-input accuracy.
 
-Begin with an operational label specification and independently labeled examples. If annotators disagree, measure that disagreement: some uncertainty comes from the task definition rather than model capacity. Preserve real deployment frequencies for a representative test set, or explicitly reweight a deliberately balanced one.
-
-Partition by customer, document, or time as appropriate:
-
-1. **Training:** update the adapter/head or full model.
-2. **Development:** select checkpoints and task design.
-3. **Calibration:** fit temperature and choose risk thresholds.
-4. **Test:** report the final pipeline once.
-
-A small dataset may require cross-validation or nested cross-fitting to use labels efficiently, but it still needs a clear distinction between fitting and evaluation. Synthetic examples are training material; a synthetic test generated by the same recipe does not establish accuracy on real user input.
-
-For labeled candidate index $$y_j$$, the usual categorical loss is
+For target index $$y_j$$,
 
 $$
 \mathcal L_{\mathrm{CE}}(\theta)=-\frac1n\sum_j
 \log p_\theta(y_j\mid x_j,q_j,C_j).
 $$
 
-In LoRA, a frozen weight matrix can be augmented by $$\Delta W=(\alpha/r)BA$$, with $$A\in\mathbb R^{r\times d_{\mathrm{in}}}$$ and $$B\in\mathbb R^{d_{\mathrm{out}}\times r}$$. Trainable parameters for that update are $$r(d_{\mathrm{in}}+d_{\mathrm{out}})$$ instead of $$d_{\mathrm{in}}d_{\mathrm{out}}$$. That counts adapter parameters, not total GPU memory: backbone weights, activations, gradients, and optimizer states still matter. Kev-27B's full-weight recipe is a different memory regime.
+LoRA adds $$\Delta W=(\alpha/r)BA$$ with $$A\in\mathbb R^{r\times d_{\mathrm{in}}}$$ and $$B\in\mathbb R^{d_{\mathrm{out}}\times r}$$, training $$r(d_{\mathrm{in}}+d_{\mathrm{out}})$$ parameters instead of $$d_{\mathrm{in}}d_{\mathrm{out}}$$. Backbone weights, activations, gradients, and optimizer state still consume memory; 27B full-weight tuning is different. A compatible released checkpoint retains the learned head/adapter discarded by raw-backbone initialization ([training instructions](https://github.com/jaredpalmer/kev/blob/fc4a17e194bca35a48c57211392ec49ea54a94ac/README.md#by-hand), JSONL and `--init_from`). Final calibration and risk/coverage evaluation need both domain and retained general data to expose forgetting, with frozen labels, revisions, score conventions, thresholds, subgroup counts, and latency conditions.
 
-Start from a released compatible checkpoint when adapting its decision behavior; starting only from the raw backbone also discards the learned decision head and adapter. The pinned [training instructions](https://github.com/jaredpalmer/kev/blob/fc4a17e194bca35a48c57211392ec49ea54a94ac/README.md#by-hand) specify JSONL labels and `--init_from`. Measure both the new domain and a retained general set, because an improvement in one domain can coincide with forgetting elsewhere.
+## Related models
+{: id="13-open-source-projects-with-related-goals"}
 
-Recalibrate the final checkpoint, then evaluate coverage at the chosen risk budget. A useful release record includes frozen examples, label definitions, revisions, loss convention, calibration method, threshold, subgroup counts, and latency conditions. Improving training loss alone is insufficient.
+| Project | Mechanism / scope |
+|---|---|
+| [kev](https://github.com/jaredpalmer/kev) | Decoder option-pointer head and typed server |
+| [open-jev](https://github.com/nico-martin/open-jev) | Browser TypeScript, ONNX/Transformers.js, WebGPU/WASM |
+| [laya-decision-model](https://github.com/kalufinnle/laya-decision-model) | Multilingual encoder family |
+| [GLiNER2](https://github.com/fastino-ai/GLiNER2) | Schema-guided extraction/classification and Decide checkpoints |
+| [typed-decisions](https://github.com/kotoba-lang/typed-decisions) | Typed decisions across backbones |
+| [openjev-rlcd](https://github.com/ZimmyGao/openjev-rlcd) | Independent open RLCD-related recipe |
 
-## 13. Open-source projects with related goals
+Browser `open-jev` lists older Kev checkpoints, distinct from the pinned Qwen3.5/3.8 family; its ONNX/encoder paths have separate context/hardware limits. Base model, tokenizer, language, context, license, revision, and calibration matter beyond parameter count. Matched examples and tuning budgets allow comparison of accuracy, proper scores, accepted risk, coverage, and total resources against rules, fixed-label classifiers, and restricted-label language models.
 
-Similar names conceal different implementations. Check the exact repository, base model, model revision, license, and output semantics before treating a project as interchangeable with Kev or Jev.
+## References
+{: id="references-and-reproducibility-limits"}
 
-| Project | Inspectable mechanism or focus | When to investigate it |
-|---|---|---|
-| [jaredpalmer/kev](https://github.com/jaredpalmer/kev) | Decoder-backbone option pointer head; Choice/Noul/Score server; released temperatures | Self-hosting the typed decision interface and adapting it to domain labels |
-| [nico-martin/open-jev](https://github.com/nico-martin/open-jev) | Browser-oriented TypeScript and ONNX/Transformers.js with WebGPU or WASM | Local browser inference; check checkpoint and context support |
-| [kalufinnle/laya-decision-model](https://github.com/kalufinnle/laya-decision-model) | Multilingual encoder-based decision model family | Multilingual routing with an encoder inference stack |
-| [fastino-ai/GLiNER2](https://github.com/fastino-ai/GLiNER2) | Schema-guided extraction and classification; Decide checkpoint family | Joint labels/entities when a pure router is insufficient |
-| [kotoba-lang/typed-decisions](https://github.com/kotoba-lang/typed-decisions) | Open typed-decision implementations across multiple backbones | Comparing architecture and training choices under a common task design |
-| [ZimmyGao/openjev-rlcd](https://github.com/ZimmyGao/openjev-rlcd) | An independent open training recipe related to RLCD | Studying reproducible decision-model training rather than assuming a recovered proprietary recipe |
-
-The browser `open-jev` project's listed older Kev checkpoints are not the same as the pinned Kev 1.0 Qwen3.5/3.8 family above. Its ONNX paths and encoder paths also have their own context and hardware constraints. A small encoder, a hybrid decoder, and a large post-trained decoder can differ in tokenizer, supported languages, sequence length, and probability calibration; parameter count alone does not rank their usefulness.
-
-For a fair comparison, freeze the same examples and label definitions, tune each candidate on the same allowed development/calibration data, and compare accuracy, proper scores, accepted-case risk, coverage, and end-to-end resource use. Include a rules baseline, a conventional supervised classifier when labels are fixed, and a restricted-label language model. Select the simplest candidate that meets the measured requirements.
-
-## References and reproducibility limits
-
-- [TypeSafe introduction](https://docs.typesafe.ai/introduction), [API](https://docs.typesafe.ai/api), [Choice](https://docs.typesafe.ai/primitives/choice), [Noul](https://docs.typesafe.ai/primitives/noul), [Score](https://docs.typesafe.ai/primitives/score), and [confidence specification](https://docs.typesafe.ai/confidence).
-- [Kev, pinned source and release documentation](https://github.com/jaredpalmer/kev/tree/fc4a17e194bca35a48c57211392ec49ea54a94ac), including `kev/model.py` and model cards.
-- [Guo et al., On Calibration of Modern Neural Networks](https://proceedings.mlr.press/v70/guo17a.html).
-- [Evaluating and Benchmarking Jev, version 1](https://arxiv.org/html/2609.37647v1).
-- [LLM-as-Jev](https://arxiv.org/abs/2610.02076) and [independent open RLCD work](https://arxiv.org/abs/2609.38850).
-
-The probability and loss derivations above state their assumptions explicitly. Actual calibration, domain accuracy, and hardware performance require measurements on the selected model and workload. Public claims and reproducible source code supply starting evidence; neither substitutes for that final evaluation.
+- [TypeSafe](https://docs.typesafe.ai/introduction), [API](https://docs.typesafe.ai/api), [Choice](https://docs.typesafe.ai/primitives/choice), [Noul](https://docs.typesafe.ai/primitives/noul), [Score](https://docs.typesafe.ai/primitives/score), [confidence](https://docs.typesafe.ai/confidence).
+- [Pinned Kev source and release documentation](https://github.com/jaredpalmer/kev/tree/fc4a17e194bca35a48c57211392ec49ea54a94ac).
+- [Guo et al., calibration](https://proceedings.mlr.press/v70/guo17a.html).
+- [Evaluating and Benchmarking Jev, v1](https://arxiv.org/html/2609.37647v1).
+- [LLM-as-Jev](https://arxiv.org/abs/2610.02076), [independent RLCD work](https://arxiv.org/abs/2609.38850).

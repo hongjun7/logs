@@ -2,33 +2,33 @@
 lang: en
 translation_key: 2024-02-10-characteristic-sets
 translation_url: /ko/2024/02/10/characteristic-sets.html
-title: "Characteristic Sets: When RDF Cardinality Is Exact, and When It Is Estimated"
+title: "Characteristic Sets"
 tags: ["knowledge-graphs", "databases", "cardinality"]
-subtitle: "Derive star-query counts from predicate co-occurrence, then expose the multiplicity, correlation, and compression assumptions behind the estimator."
-last_modified_at: 2026-10-11
+subtitle: "Predicate co-occurrence, exact star counts, and cardinality estimation."
+last_modified_at: 2026-10-29
 sources_checked_at: 2026-10-11
 ---
 
-> **The idea in one minute.** A characteristic set records which predicates occur for a subject. It preserves correlations such as “books usually have both an author and a title.” For a restricted distinct-subject star query, complete characteristic-set counts give an exact answer count. Bag multiplicities, constants, and compressed summaries require additional information or assumptions.
+A characteristic set records which predicates occur for a subject. This captures co-occurrence, such as books having both authors and titles. Complete counts answer restricted distinct-subject star queries exactly; multiplicities, constants, joins, and compression require more information.
 
-**Reading path.** Follow the exact counting formula first, then the two-subject counterexample. The later sections connect synopsis design to join planning and explain how to evaluate an estimator. Prerequisites are sets, averages, and the idea of a database join.
+## Cardinality and planning
+{: id="1-why-an-optimizer-needs-cardinality"}
 
-## 1. Why an optimizer needs cardinality
+A planner uses cardinality to choose join order and operators. A filter reducing a million rows to ten can save substantial intermediate work when applied early.
 
-A query planner chooses join order and physical operators. Intermediate result size can matter more than final result size. If a filter reduces a million rows to ten, applying it early may save substantial work; an incorrect estimate can choose the opposite order.
+RDF graphs are sets of triples, but SPARQL generally returns a multiset of solution mappings. Full bindings, projected rows, and distinct values have different counts; `SELECT DISTINCT` changes the target.
 
-Cardinality is the number of solutions under specified semantics. RDF graphs are sets of triples, but SPARQL evaluation generally produces a **multiset of solution mappings**. `SELECT DISTINCT` changes that output. Always identify whether the count concerns full bindings, projected rows, or distinct values.
+## Characteristic-set partitions
+{: id="2-the-characteristic-set-partition"}
 
-## 2. The characteristic-set partition
-
-Let $$R$$ be a finite RDF graph and $$U_R$$ its subjects. Define
+For a finite RDF graph $$R$$ with subjects $$U_R$$, define
 
 $$
 C(s)=\{p:\exists o\;(s,p,o)\in R\},\qquad
 n_C=\vert \{s\in U_R:C(s)=C\}\vert .
 $$
 
-The sets of subjects indexed by $$C$$ form a disjoint partition. Consider a star query with predicates $$P=\{p_1,\ldots,p_k\}$$:
+The subject groups indexed by $$C$$ form a disjoint partition. A star with predicate set $$P=\{p_1,\ldots,p_k\}$$ includes queries such as
 
 ```sparql
 PREFIX : <urn:example:>
@@ -38,111 +38,114 @@ SELECT DISTINCT ?s WHERE {
 }
 ```
 
-Assume every object variable is fresh and unrestricted, with no filters or extra shared variables. A subject matches precisely when $$P\subseteq C(s)$$. Therefore
+With fresh unrestricted object variables, no filters, and no other shared variables, a subject matches exactly when $$P\subseteq C(s)$$. Hence
 
 $$
 N_{\mathrm{distinct}}(P)=\sum_{C\supseteq P}n_C.
 $$
 
-**Proof.** The query requires at least one outgoing edge for every requested predicate. That condition is exactly set containment. Count each matching subject once in its unique partition class. The sum has neither missing subjects nor double counting.
+Each required predicate must have an outgoing edge. Set containment states precisely that condition, and each subject belongs to one class, so the sum counts it once. Bounded objects, shared object variables, arbitrary joins, or merged classes do not retain this guarantee. [Neumann and Moerkotte, 2011](https://madoc.bib.uni-mannheim.de/29788/).
 
-This is the main useful exactness result. It does not extend unchanged to bounded objects, shared object variables, arbitrary joins, or summaries that merged distinct characteristic sets. [Neumann and Moerkotte, 2011](https://madoc.bib.uni-mannheim.de/29788/).
+## Binding multiplicities
+{: id="3-full-bindings-require-multiplicities"}
 
-## 3. Full bindings require multiplicities
-
-Let
+The outgoing multiplicity is
 
 $$
 m_p(s)=\vert \{o:(s,p,o)\in R\}\vert .
 $$
 
-For the same star with independent object variables and no duplicate elimination, the number of full bindings is
+For independent object variables without duplicate elimination, the full binding count is
 
 $$
 N_{\mathrm{bag}}(P)=\sum_{s:P\subseteq C(s)}\prod_{p\in P}m_p(s).
 $$
 
-Each object variable independently chooses one value from that subject's outgoing edges. The product counts combinations for a subject; the sum combines subjects. Projection may keep repeated rows, so removing object variables without `DISTINCT` does not remove their multiplicity.
+Each variable selects an outgoing value independently; the product counts one subject's combinations. Projection without `DISTINCT` retains the resulting repeated rows.
 
-Store total predicate occurrences $$o_{C,p}=\sum_{s:C(s)=C}m_p(s)$$ and mean multiplicity $$\bar m_{C,p}=o_{C,p}/n_C$$. A compact estimator is
+A compact synopsis stores total occurrences $$o_{C,p}=\sum_{s:C(s)=C}m_p(s)$$ and mean multiplicities $$\bar m_{C,p}=o_{C,p}/n_C$$, giving
 
 $$
 \widehat N_{\mathrm{bag}}(P)=\sum_{C\supseteq P}n_C\prod_{p\in P}\bar m_{C,p}.
 $$
 
-It replaces an average of products by a product of averages. That is an assumption about multiplicity correlation within each class.
+This replaces an average of products with a product of averages, assuming away multiplicity correlations within a class.
 
-### A worked counterexample
+Identical predicate presence does not imply identical outgoing counts. The synopsis preserves the former exactly while its mean-based approximation collapses the latter into one average per predicate.
 
-Two subjects share characteristic set `{author, title}`. Their multiplicities are $$(1,1)$$ and $$(3,3)$$. The true count is $$1\cdot1+3\cdot3=10$$. Both mean multiplicities are $$2$$, so the estimator gives $$2\cdot2\cdot2=8$$.
+### Correlation example
+{: id="a-worked-counterexample"}
 
-For two predicates, write expectation over a uniformly chosen subject in the class:
+Two subjects with characteristic set `{author, title}` have multiplicities $$(1,1)$$ and $$(3,3)$$. Their true count is $$1\cdot1+3\cdot3=10$$. Both means equal $$2$$, yielding $$2\cdot2\cdot2=8$$. For a uniformly chosen subject in the class,
 
 $$
 \mathbb E[m_p m_q]
 =\mathbb E[m_p]\mathbb E[m_q]+\operatorname{Cov}(m_p,m_q).
 $$
 
-The missing cardinality contribution is $$n_C\operatorname{Cov}(m_p,m_q)$$. With pairs $$(1,3)$$ and $$(3,1)$$, the true count is $$6$$ and the same mean-based estimate is $$8$$: negative covariance reverses the error. Characteristic sets capture **predicate presence** correlations, not automatically all multiplicity correlations.
+The omitted contribution is $$n_C\operatorname{Cov}(m_p,m_q)$$. Reversing the pairs to $$(1,3)$$ and $$(3,1)$$ gives true count $$6$$ but estimate $$8$$, reversing the error's direction. Predicate-presence correlations therefore do not determine multiplicity correlations.
 
-Repeated predicates with different object variables introduce powers, such as $$m_p(s)^2$$. Reusing the same object variable instead introduces equality constraints. Neither case should silently use an ordinary two-predicate independence formula.
+Repeated predicates with separate object variables introduce powers such as $$m_p(s)^2$$; a shared object variable instead imposes equality. Both differ from two independent predicates.
 
-## 4. Constants and shared variables
+## Constants and shared variables
+{: id="4-constants-and-shared-variables"}
 
-For `?s :author :Ada`, predicate presence only says an author exists. It does not say Ada is one of the authors. Define
+`?s :author :Ada` requires Ada, not merely an author. The indicator
 
 $$
 b_{p,o}(s)=\mathbf1\{(s,p,o)\in R\}.
 $$
 
-An exact distinct-subject count for bounded predicates is a sum of products of these indicators. Storing only a global frequency for Ada can miss correlations with a subject class, publication year, or another constant.
+supports exact distinct-subject counts through sums of indicator products. A global Ada frequency can miss correlations with classes, years, or other constants.
 
-A formula such as $$\Pr(O=o\mid P=p)$$ is meaningful when the conditioning event has positive probability and the sampling universe is defined, for example a uniformly selected triple. But converting a triple-level frequency into a subject-level query probability requires care: high-degree subjects occur more often in the triple distribution.
+A probability such as $$\Pr(O=o\mid P=p)$$ needs a defined sampling universe and positive conditioning probability. Uniform triple sampling overrepresents high-degree subjects, so triple frequency is not automatically subject probability.
 
-For a join `?s :author ?x . ?s :editor ?x`, counting separate author and editor multiplicities is insufficient. We need the intersection of object sets for each subject:
+For `?s :author ?x . ?s :editor ?x`, separate multiplicities are insufficient; the answer count uses
 
 $$
 \sum_s \vert \operatorname{Authors}(s)\cap\operatorname{Editors}(s)\vert .
 $$
 
-This example cleanly separates a predicate co-occurrence synopsis from a complete query answer counter.
+This requires object-set overlap, beyond predicate co-occurrence.
 
-## 5. Compression changes the guarantee
+## Compression
+{: id="5-compression-changes-the-guarantee"}
 
-With $$d$$ possible predicates, as many as $$2^d$$ sets exist in principle. A real dataset often uses far fewer, but a strict storage budget may still require merging rare sets. If a subject with `{author}` is counted inside `{author, title}`, a query requiring both properties can count it incorrectly. If a true `{author, title}` class is split into separate single-predicate summaries, its co-occurrence can be lost.
+With $$d$$ possible predicates, up to $$2^d$$ sets exist. Storage limits may force rare classes to merge. Counting `{author}` inside `{author, title}` creates false matches for a two-predicate star; splitting a true joint class into single-predicate summaries loses co-occurrence.
 
-There is no universal rule that overestimation is harmless. It can change join order, memory reservations, and operator choice. Underestimation can also be damaging when it selects nested loops for a large intermediate. The relevant objective is execution cost under the workload, not a preference for one error direction in isolation.
+Neither error direction is inherently harmless. Overestimation can change join order, memory reservations, and operators; underestimation can select nested loops for large intermediates. Counts need an exact/merged/sampled/stale status. Adding a subject's first `title` edge or deleting its last moves the subject between classes; predicate totals alone cannot maintain the partition.
 
-An implementation should retain metadata saying whether counts are exact, merged, sampled, or stale. Incremental updates can change a subject's entire characteristic set: adding its first `title` edge moves it to another partition; deleting its last such edge moves it back. Updating only predicate totals would leave the synopsis inconsistent.
+## Multi-star joins
+{: id="6-join-estimation-beyond-one-star"}
 
-## 6. Join estimation beyond one star
-
-Under an explicit independence approximation for relational inputs $$R_1,\ldots,R_m$$ and join predicates $$e$$, the common form is
+For relational inputs $$R_1,\ldots,R_m$$ and join predicates $$e$$, an explicit independence approximation has the form
 
 $$
 \widehat N=\left(\prod_{i=1}^{m}\vert R_i\vert \right)
 \left(\prod_{e}\widehat{\operatorname{sel}}(e)\right).
 $$
 
-Selectivities are multiplied, not summed. This expression assumes compatible sampling universes and independence; it is not a theorem for correlated joins. A synopsis covering a group of correlated predicates replaces the corresponding factors as a group. Overlapping synopses must be combined carefully to avoid counting the same correlation or base population twice.
+Selectivities multiply. The formula assumes compatible sampling universes and independence, not correlated joins. A synopsis for a correlated predicate group replaces that group's factors; overlapping synopses risk counting a correlation or population twice.
 
-Equivalent logical queries have the same true cardinality regardless of physical join order. A consistent planner should reuse one logical-subexpression estimate when comparing physical plans, although approximate estimation procedures can otherwise return different values on separate calls.
+Equivalent logical queries have the same true cardinality regardless of physical order. Reusing one logical-subexpression estimate avoids separate approximate calls disagreeing while physical plans are compared.
 
-## 7. Evaluating an estimator today
+## Evaluation
+{: id="7-evaluating-an-estimator-today"}
 
-For positive true and estimated counts, define
+For positive actual and estimated counts,
 
 $$
 q\text{-error}=\max\left(\frac{\widehat N}{N},\frac{N}{\widehat N}\right).
 $$
 
-A count of $$80$$ versus true count $$100$$ has q-error $$1.25$$. Zero counts require a separately stated policy; silently replacing all zeroes with one hides false emptiness predictions. Report empty-query detection, median and tail q-error, synopsis build time, storage, estimate latency, and downstream query latency.
+An estimate of $$80$$ for true count $$100$$ has q-error $$1.25$$. Zero needs an explicit policy: replacing it with one hides false-empty predictions. Useful measurements include empty-query detection, median/tail q-error, build/storage cost, estimate latency, and final query latency.
 
-Compare a complete characteristic-set baseline, a budgeted version, a sampling estimator, and the system's native statistics on the same data snapshot. Include stars, cycles, bounded objects, repeated predicates, skew, and update drift. The 2024 complex-query sampling work provides a complementary direction for operators that a simple star synopsis cannot model. [Hu and Motik, 2024](https://www.cs.ox.ac.uk/people/boris.motik/pubs/hm24-accurate-sampling.pdf).
+Complete and budgeted characteristic sets, sampling, and native statistics can be compared on the same snapshot, covering stars, cycles, constants, repeated predicates, skew, and update drift. [Complex-query sampling](https://www.cs.ox.ac.uk/people/boris.motik/pubs/hm24-accurate-sampling.pdf) addresses operators outside a simple star synopsis.
 
-## 8. Pairwise independence is insufficient for a three-predicate star
+## Higher-order correlations
+{: id="8-pairwise-independence-is-insufficient-for-a-three-predicate-star"}
 
-For three multiplicities $$X,Y,Z$$ in a characteristic-set class, expanding around their means gives
+For three multiplicities $$X,Y,Z$$ in one class, expansion around their means gives
 
 $$
 \begin{aligned}
@@ -155,19 +158,20 @@ $$
 \end{aligned}
 $$
 
-A synopsis of only means and pairwise covariances can still miss the final centered third-order term. For a concrete RDF multiplicity construction, consider four equally weighted subjects with tuples $$(1,1,1),(1,2,2),(2,1,2),(2,2,1)$$. Every multiplicity is positive, so the subjects can all share the same three-predicate characteristic set. Each pair is independent, with mean $$3/2$$ and covariance zero.
+Means and pairwise covariances omit the centered third-order term. Four equally weighted subjects with multiplicities $$(1,1,1),(1,2,2),(2,1,2),(2,2,1)$$ all have positive values and can share one characteristic set. Every pair is independent, with mean $$3/2$$ and zero covariance.
 
-The exact number of full star bindings is $$1+4+4+4=13$$. A product-of-means estimate gives $$4(3/2)^3=13.5$$. The mean product is $$13/4$$, while the product of means is $$27/8$$; the centered third-order term is $$-1/8$$. Thus eliminating every pairwise covariance does not establish mutual independence. This matters as stars grow: collecting more marginal statistics does not automatically recover their joint distribution.
+The exact count is $$1+4+4+4=13$$, while the product-of-means estimate is $$4(3/2)^3=13.5$$. The mean product $$13/4$$ differs from the product of means $$27/8$$ by $$-1/8$$. Pairwise independence therefore does not establish mutual independence; more marginal statistics need not recover the joint distribution.
 
-## 9. Derive a conventional equijoin estimate
+## Equijoin estimates
+{: id="9-derive-a-conventional-equijoin-estimate"}
 
-For two relations joining on one variable, let $$f_R(v)$$ and $$f_S(v)$$ be the multiplicities of key $$v$$. The true bag join size is
+Let $$f_R(v)$$ and $$f_S(v)$$ be the frequencies of join key $$v$$ in two relations. The true bag join size is
 
 $$
 N_{R\Join S}=\sum_v f_R(v)f_S(v).
 $$
 
-Suppose keys are uniform within domains $$D_R,D_S$$ of sizes $$V_R,V_S$$. If the smaller domain is contained in the larger, there are $$\min(V_R,V_S)$$ common keys. Hence
+Under uniform keys in domains $$D_R,D_S$$ of sizes $$V_R,V_S$$, containment of the smaller domain gives $$\min(V_R,V_S)$$ common keys. Thus
 
 $$
 \widehat N=
@@ -175,22 +179,24 @@ $$
 =\frac{\vert R\vert \vert S\vert }{\max(V_R,V_S)}.
 $$
 
-This familiar estimate follows from **uniformity and containment**, not merely from knowing distinct-value counts. With incomplete domain overlap, replace the common-key factor by the actual overlap size; with skew, use the frequency-product sum. Correlation between joined keys and filters creates another conditioning problem.
+The estimate requires uniformity and containment, not just distinct-value counts. Partial overlap changes the common-key factor; skew requires the frequency-product sum. Filters correlated with the key introduce further conditioning.
 
-For example, if both inputs have ten rows over two equally frequent common keys, the join has $$2\cdot5\cdot5=50$$ rows. If one input instead has nine occurrences of the first key and one of the second, while the other has the reverse, the join has $$9\cdot1+1\cdot9=18$$ rows. Both inputs still have ten rows and two distinct keys, so the uniform estimate remains 50. The failure is invisible to those marginal counts.
+Two ten-row inputs with two equally frequent shared keys join to $$2\cdot5\cdot5=50$$ rows. If their frequencies become nine/one and one/nine, the join has $$9\cdot1+1\cdot9=18$$ rows. Both still have ten rows and two distinct keys, so the uniform estimate stays 50 and misses the skew.
 
-## 10. Maintaining and selecting a synopsis
+## Maintenance
+{: id="10-maintaining-and-selecting-a-synopsis"}
 
-A complete characteristic-set build can scan triples to collect each subject's unique predicate set, then count identical sets. Expected linear work in triple count assumes appropriate hashing and a representation that avoids repeated expensive canonicalization; sorting-based implementations have different costs. Memory includes subject-to-set working state, keys, class counts, and any multiplicity statistics, not just the final number of characteristic sets.
+A complete build collects each subject's unique predicates and counts identical sets. Expected linear work assumes suitable hashing without repeated expensive canonicalization; sorting has different costs. Memory includes subject working state, keys, class counts, and multiplicity statistics.
 
-For dynamic data, maintain a per-subject count for each predicate. Adding a second edge for an already present predicate changes multiplicity but not predicate presence. Deleting the last edge removes that predicate from the set and moves the subject to a different class. Class means must reflect both the move and remaining multiplicities. A periodic rebuild supplies a useful oracle for checking incremental maintenance on disposable data.
+Per-subject predicate counts distinguish another edge from the first or last edge. A second edge changes multiplicity only; removing the last changes the set and class. Class means must include moves and remaining multiplicities. Rebuilding provides an oracle for incremental maintenance on disposable data.
 
-A budgeted summary should expose which queries retain exact distinct-star counts and which use merged or estimated information. An optimizer can then distinguish a proof-backed zero from a sampled zero or a stale approximation. Downstream cost need not vary monotonically with q-error: an estimate with a smaller numerical error can cross an operator-choice threshold in the wrong direction. Evaluate plan choices and query latency as well as the statistical metric.
+A budgeted synopsis can expose which distinct-star counts remain exact. This separates proof-backed zeros from sampled zeros or stale estimates. Lower q-error need not lower execution cost: a smaller error can cross an operator threshold in the wrong direction. Plan choices and latency remain part of evaluation; historical storage and benchmark figures are not universal RDF properties.
 
-## References and current scope
+Exactness belongs to a query shape and the retained statistics, rather than to the characteristic-set label alone. Compression or added query constraints can change it.
+
+## References
+{: id="references-and-current-scope"}
 
 - [Characteristic sets, ICDE 2011](https://madoc.bib.uni-mannheim.de/29788/).
-- [SPARQL 1.1 query semantics](https://www.w3.org/TR/sparql11-query/).
-- [Accurate sampling for complex graph queries, TODS 2024](https://www.cs.ox.ac.uk/people/boris.motik/pubs/hm24-accurate-sampling.pdf).
-
-The exact formula is now separated from every approximation. Historical storage and benchmark figures are not treated as universal properties of RDF data.
+- [SPARQL 1.1 semantics](https://www.w3.org/TR/sparql11-query/).
+- [Accurate sampling, TODS 2024](https://www.cs.ox.ac.uk/people/boris.motik/pubs/hm24-accurate-sampling.pdf).

@@ -2,31 +2,31 @@
 lang: en
 translation_key: 2026-02-15-Nested-Learning
 translation_url: /ko/2026/02/15/Nested-Learning.html
-title: "Nested Learning: Memory, Optimization, and Multiple Timescales"
+title: "Nested Learning"
 tags: ["machine-learning", "memory", "continual-learning"]
-subtitle: "Understand Nested Learning through explicit state updates, associative memory, optimizer traces, and the distinction between a general mathematical model and the Hope architecture."
-last_modified_at: 2026-10-11
+subtitle: "Associative memory, optimizer states, and coupled learning across timescales."
+last_modified_at: 2026-10-29
 sources_checked_at: 2026-10-11
 ---
 
-> **The idea in one minute.** Nested Learning views a model and its learning process as interacting systems that update on different context streams and timescales. An optimizer's moment estimates, a fast associative memory, and slow model weights can all be stateful learners. This perspective helps design continual adaptation, but multiple timescales alone do not prove that forgetting disappears.
+Nested Learning describes interacting learners with different context streams and update timescales. Fast associative states, optimizer traces, and slow weights provide distinct forms of memory; their update rules determine adaptation and retention.
 
-**Reading path.** Start with state versus parameters, derive a linear memory update, and then examine momentum and Adam. The later sections describe a generic multi-rate construction and explain how it relates to the paper's Hope model. Prerequisites are gradients, matrices, and supervised loss functions.
+## State and parameters
+{: id="1-what-changes-when-a-model-learns"}
 
-## 1. What changes when a model learns?
-
-A conventional supervised model predicts $$f_\theta(x)$$ and updates parameters using a loss. A stateful learner additionally carries $$z_t$$, which changes with its input history:
+A supervised predictor $$f_\theta(x)$$ learns parameters from a loss. A stateful learner also maintains history-dependent $$z_t$$:
 
 $$
 \widehat y_t=f_\theta(x_t,z_t),\qquad
 z_{t+1}=U_\psi(z_t,C_t).
 $$
 
-$$C_t$$ is the context available for that update. It may include an input, a representation, a target, or an internally generated learning signal. If an update requires a target $$y_t$$, that target must actually be available; ordinary inference does not magically provide ground truth.
+Update context $$C_t$$ can contain inputs, representations, targets, or internal learning signals. A required target $$y_t$$ must be available during that update.
 
-The Nested Learning paper organizes architecture and optimization through nested or parallel optimization levels and their context flows. It motivates a continuum of update frequencies and introduces Hope as a proof of concept. The equations in the following explanatory sections are **generic mathematical examples**, not undocumented equations of Hope. [Paper](https://arxiv.org/abs/2512.24695) and [Google Research explanation](https://research.google/blog/introducing-nested-learning-a-new-ml-paradigm-for-continual-learning/).
+The paper organizes nested or parallel optimization levels and introduces Hope as a proof of concept. The derivations below are generic examples, distinguished from Hope’s architecture. [Paper](https://arxiv.org/abs/2512.24695), [Google Research](https://research.google/blog/introducing-nested-learning-a-new-ml-paradigm-for-continual-learning/).
 
-## 2. Associative memory as a regression problem
+## Associative memory
+{: id="2-associative-memory-as-a-regression-problem"}
 
 Let keys $$k_i\in\mathbb R^{d_k}$$ map to values $$v_i\in\mathbb R^{d_v}$$. A linear memory $$M\in\mathbb R^{d_v\times d_k}$$ solves
 
@@ -43,7 +43,7 @@ M(KK^\top+\lambda I)=VK^\top,
 M^*=VK^\top(KK^\top+\lambda I)^{-1}.
 $$
 
-Positive $$\lambda$$ makes the inverse well defined. Without regularization, singular keys may require a pseudoinverse and the optimum need not be unique.
+Positive $$\lambda$$ ensures invertibility. Without regularization, singular keys may require a pseudoinverse and allow nonunique optima.
 
 For an unregularized one-observation online loss, a gradient step is
 
@@ -51,9 +51,10 @@ $$
 M_{t+1}=M_t-\eta_t(M_tk_t-v_t)k_t^\top.
 $$
 
-This delta-rule update writes the prediction error into memory. It is dimensionally consistent: $$(M_tk_t-v_t)k_t^\top$$ has shape $$d_v\times d_k$$.
+The delta rule writes prediction error into memory; $$(M_tk_t-v_t)k_t^\top$$ has shape $$d_v\times d_k$$.
 
-### Interference is visible in the algebra
+### Interference
+{: id="interference-is-visible-in-the-algebra"}
 
 After writing pair $$(k_t,v_t)$$, the output for an old key $$k'$$ changes by
 
@@ -62,11 +63,12 @@ $$
 =-\eta_t(M_tk_t-v_t)(k_t^\top k').
 $$
 
-Orthogonal keys give zero interference for this particular update; correlated keys generally change one another's readout. Fast writing alone therefore does not guarantee retention. Capacity, key geometry, regularization, gating, and consolidation all affect memory behavior.
+Orthogonal keys do not interfere in this update; correlated keys generally alter earlier readouts. Capacity, key geometry, regularization, gating, and consolidation determine retention.
 
-For a fixed key with squared norm $$c>0$$, the one-sample error evolves as $$e_{t+1}=(1-\eta c)e_t$$. Contraction requires $$0<\eta c<2$$. This elementary stability condition is not a convergence theorem for a nonlinear multi-module architecture, but it illustrates why update scales matter.
+For a fixed key of squared norm $$c>0$$, error follows $$e_{t+1}=(1-\eta c)e_t$$ and contracts when $$0<\eta c<2$$. This single-sample result does not establish nonlinear coupled stability.
 
-## 3. Attention as a different memory read
+## Attention and stored pairs
+{: id="3-attention-as-a-different-memory-read"}
 
 Given a query $$q\in\mathbb R^{d_k}$$, key vectors $$k_i$$, and values $$v_i$$,
 
@@ -76,11 +78,12 @@ $$
 \qquad\widehat v(q)=\sum_i\alpha_i(q)v_i.
 $$
 
-This is a weighted read over explicitly stored key–value pairs. Updating the cache appends or replaces stored data; it need not update trainable weights by a gradient. A regression memory compresses associations into parameters such as $$M$$. Both can be discussed as memory, but their capacity, computational cost, and update mechanism differ.
+Attention reads explicit key–value pairs, whose cache can change without gradient updates. Regression memory instead compresses associations into $$M$$. Their capacities, costs, and write mechanisms differ. Cache writes append or replace stored examples, whereas the regression rule changes the parameters used to answer every key.
 
-A decoder's KV cache is often local to a request. Calling it “learning” in a broad computational sense does not imply persistent model fine-tuning across users. Always state the lifetime and reset policy of a fast state.
+A decoder KV cache is often request-local. Its update need not persist as fine-tuned weights across users; state lifetime and reset rules determine what survives.
 
-## 4. Optimizers already carry memory
+## Optimizer memory
+{: id="4-optimizers-already-carry-memory"}
 
 For gradient $$g_t$$, normalized momentum maintains
 
@@ -94,7 +97,7 @@ $$
 v_t=(1-\beta)\sum_{i=1}^{t}\beta^{t-i}g_i.
 $$
 
-It is an exponentially weighted history of gradients. The half-life in update steps is $$\log(1/2)/\log\beta$$ for $$0<\beta<1$$. A coefficient near one stores a longer trace; it also responds more slowly to new directions.
+This exponentially weighted gradient history has half-life $$\log(1/2)/\log\beta$$ for $$0<\beta<1$$. Near-one decay retains longer history but responds more slowly.
 
 Adam maintains coordinatewise first and second moments:
 
@@ -108,9 +111,10 @@ v_t&=\beta_2v_{t-1}+(1-\beta_2)(g_t\odot g_t),\\
 \end{aligned}
 $$
 
-The division and square root are coordinatewise; $$\epsilon>0$$ avoids division by zero. Bias correction addresses initialization of moment traces under its conventional assumptions. It does not fix every nonstationary bias or guarantee convergence for arbitrary objectives. Nested Learning's optimizer-as-memory viewpoint is an interpretation of these states; the equations above are the standard Adam recurrence. [Adam](https://arxiv.org/abs/1412.6980).
+Division and square roots are coordinatewise; $$\epsilon>0$$ prevents zero division. These are standard [Adam](https://arxiv.org/abs/1412.6980) recurrences. Bias correction handles moment initialization under its assumptions, not arbitrary nonstationarity or convergence. Nested Learning interprets such states as memory.
 
-## 5. Nested objectives and gradient flow
+## Nested objectives
+{: id="5-nested-objectives-and-gradient-flow"}
 
 A simple bilevel construction is
 
@@ -119,7 +123,7 @@ $$
 \min_\theta\mathcal L_{\mathrm{outer}}(\theta,\phi^*(\theta)).
 $$
 
-If the inner solution is unique and smooth, its gradient is zero, and the inner Hessian in $$\phi$$ is invertible, implicit differentiation gives
+For a unique smooth stationary inner solution with invertible Hessian in $$\phi$$, implicit differentiation gives
 
 $$
 \frac{d\phi^*}{d\theta}
@@ -127,11 +131,12 @@ $$
 \nabla_{\phi\theta}^2\mathcal L_{\mathrm{inner}}.
 $$
 
-The outer gradient includes both a direct effect and the effect through the adapted state. Unrolling a finite number of update steps is a different computational route. Truncating that unroll or stopping gradients changes the optimized approximation. These choices determine training cost and behavior; a box labeled “fast learner” is not enough to specify them.
+The outer gradient includes direct and adapted-state effects. Finite unrolling computes an alternative approximation; truncation and stopped gradients change the gradient approximation and computational cost.
 
-This generic bilevel example explains one type of nesting. It does not assert that every component of the published architecture solves its inner problem exactly at inference.
+This bilevel example does not require every Hope component to solve an inner optimum exactly during inference.
 
-## 6. Multiple update frequencies
+## Update frequencies
+{: id="6-multiple-update-frequencies"}
 
 For modules with states $$z_t^{(k)}$$, let $$u_k(t)\in\{0,1\}$$ indicate a scheduled update:
 
@@ -149,13 +154,14 @@ $$
 f_k(H)=\frac1H\sum_{t=1}^{H}u_k(t).
 $$
 
-Frequency is not the same as learning rate. A module updated every step with a tiny step size may change less than a rarely updated module with a large step. Context horizon and update magnitude also shape its effective timescale.
+Frequency counts scheduled writes; learning rate controls an update’s step size. Frequent small writes can change less than rare large writes. Update magnitude and context horizon also determine effective timescales.
 
-The paper's Continuum Memory System uses this broad idea of multiple rates, and Hope combines it with a self-modifying learning module. A gated sum, concatenation, or attention over generic module outputs is a possible explanatory construction; it should not be described as the exact published aggregation unless checked against the paper's specification.
+Hope combines the multi-rate Continuum Memory System with a self-modifying module. Gated sums, concatenation, and attention illustrate possible combinations, not a verified specification of its aggregation.
 
-## 7. Continual-learning evaluation
+## Continual-learning metrics
+{: id="7-continual-learning-evaluation"}
 
-Let $$a_{t,i}$$ be accuracy on task $$i$$ after learning through task $$t$$. Average final accuracy is
+Let $$a_{t,i}$$ denote task-$$i$$ accuracy after task $$t$$. Final average accuracy is
 
 $$
 \mathrm{ACC}_T=\frac1T\sum_{i=1}^{T}a_{T,i}.
@@ -168,17 +174,19 @@ $$
 \left(\max_{i\le t<T}a_{t,i}-a_{T,i}\right).
 $$
 
-This signed definition can be negative if a task improves later; clipping at zero gives a different metric. State the convention. Also measure forward transfer, backward transfer, adaptation latency, persistent state size, and reset behavior. A model may trade retention for plasticity, or perform well with fast state retained but poorly after reset.
+This signed measure becomes negative if old tasks improve; zero-clipping defines another metric. Keeping fast state can yield a different accuracy from evaluation after a reset. Transfer, adaptation latency, persistent-state size, and reset behavior expose retention–plasticity tradeoffs.
 
-Language modeling, long-context recall, online adaptation, and continual supervised learning are related but different evaluations. The original Hope experiments support claims within their model scales, data, and baselines. They do not establish that a new paradigm universally eliminates catastrophic forgetting or supersedes every Transformer.
+Language modeling, long-context recall, online adaptation, and continual supervised learning test different capabilities. Hope’s reported scales, data, and baselines do not establish universal elimination of forgetting.
 
-## 8. Designing a controlled experiment
+## Controlled comparisons
+{: id="8-designing-a-controlled-experiment"}
 
-Start with a single fast memory and a clear learning signal. Compare frozen state, recurrent state without online gradients, and actual online updates. Then vary update rates while matching parameter count, total update budget, and inference compute. Test long task sequences, abrupt shifts, and the return to an old task.
+Frozen state, recurrence without online gradients, and online updates isolate different mechanisms. Matching parameters, update budgets, and inference compute makes update-rate comparisons meaningful across long streams, shifts, and revisited tasks.
 
-Reset state between independent users or test streams unless persistence is part of the contract. Record which weights and states change during training and during evaluation. The newest available implementation can be useful, but a community reproduction is not automatically an official implementation of every paper component.
+Independent users or streams need separate resets unless persistence is intended. Training/evaluation state changes and implementation provenance distinguish an architectural replication from a community approximation.
 
-## 9. Forgetting as gradient interference
+## Gradient interference
+{: id="9-forgetting-as-gradient-interference"}
 
 Let task $$i$$ have risk $$R_i(\theta)=\mathbb E_{(x,y)\sim\mathcal D_i}[\ell(f_\theta(x),y)]$$. A gradient update on task $$t$$ is $$\theta'=\theta-\eta g_t$$ with $$g_t=\nabla R_t(\theta)$$. A first-order expansion gives
 
@@ -186,14 +194,14 @@ $$
 R_i(\theta')-R_i(\theta)=-\eta\nabla R_i(\theta)^\top g_t+O(\eta^2).
 $$
 
-If the old-task and current-task gradients point against one another, their inner product is negative and the first-order effect increases old-task risk. The full conclusion depends on curvature and step size. Under an $$L_i$$-Lipschitz gradient,
+Opposing old/current gradients have negative inner product, raising old risk to first order. Curvature and step size bound that approximation. For an $$L_i$$-Lipschitz gradient,
 
 $$
 \left\vert R_i(\theta-\eta g_t)-R_i(\theta)+\eta\nabla R_i(\theta)^\top g_t\right\vert
 \le\frac{L_i\eta^2}{2}\|g_t\|^2.
 $$
 
-This bound quantifies when the first-order term dominates. In a one-dimensional toy model, $$R_1(\theta)=\tfrac12(\theta-1)^2$$ and $$R_2(\theta)=\tfrac12(\theta+1)^2$$ have different minimizers. At the old optimum $$\theta=1$$, one step toward the new task gives $$\theta'=1-2\eta$$ and old risk $$R_1(\theta')=2\eta^2$$. Separate fast states may reduce pressure on shared weights, but no architecture can assume that incompatible tasks disappear.
+In one dimension, for $$R_1(\theta)=\tfrac12(\theta-1)^2$$ and $$R_2(\theta)=\tfrac12(\theta+1)^2$$, the old optimum $$\theta=1$$ moves to $$\theta'=1-2\eta$$ after one new-task step, giving $$R_1(\theta')=2\eta^2$$. Separate fast states can reduce shared-weight pressure without removing incompatible objectives.
 
 A regularized retention objective such as
 
@@ -201,17 +209,18 @@ $$
 R_t(\theta)+\frac\lambda2\sum_jF_j(\theta_j-\theta_j^{\mathrm{old}})^2
 $$
 
-penalizes changes to old parameters with weights $$F_j\ge0$$. [Elastic Weight Consolidation](https://www.pnas.org/doi/10.1073/pnas.1611835114) uses an importance approximation related to the Fisher information. This is an alternative retention mechanism to compare, not an equation defining Hope. Replay, parameter isolation, regularization, and state consolidation impose different storage and privacy costs.
+penalizes old-parameter changes using $$F_j\ge0$$. [Elastic Weight Consolidation](https://www.pnas.org/doi/10.1073/pnas.1611835114) approximates importance through Fisher information. Unlike a Hope definition, it is a comparison mechanism; replay, isolation, regularization, and consolidation have different storage/privacy costs.
 
-## 10. Differentiate through an explicit inner update
+## Differentiating through updates
+{: id="10-differentiate-through-an-explicit-inner-update"}
 
-To make a fast learner concrete, let
+Consider an explicit fast update:
 
 $$
 \phi_{t+1}=\phi_t-\eta\nabla_\phi\mathcal L_t(\phi_t;\theta).
 $$
 
-With column gradients, its derivative with respect to its prior fast state is
+With column gradients, the prior-state Jacobian is
 
 $$
 J_t=I-\eta\nabla^2_{\phi\phi}\mathcal L_t.
@@ -223,27 +232,28 @@ $$
 D_{t+1}=J_tD_t-\eta\nabla^2_{\phi\theta}\mathcal L_t.
 $$
 
-The outer loss therefore includes the indirect term $$D_T^\top\nabla_\phi\mathcal L_{\mathrm{outer}}$$ in addition to its direct parameter derivative. Products of successive $$J_t$$ can shrink or amplify gradients; stopping the gradient at a state reset changes which effects are learned. A trainable learning-rate or update network introduces additional derivative terms.
+The direct parameter derivative remains alongside the adapted-state contribution. The outer gradient adds $$D_T^\top\nabla_\phi\mathcal L_{\mathrm{outer}}$$. Products of $$J_t$$ shrink or amplify gradients; reset boundaries change which past adaptations affect the objective. A trainable learning rate or update network introduces additional derivative terms.
 
-For a quadratic inner loss with positive-definite Hessian $$H$$ and a fixed optimum, plain gradient descent contracts each eigenmode by $$1-\eta\lambda_j(H)$$. Stability requires $$0<\eta<2/\lambda_{\max}(H)$$. Different curvatures cause different adaptation speeds even at the same update frequency. This exact quadratic result explains a mechanism; a nonconvex network need not obey one global positive-definite Hessian.
+For a quadratic inner loss with positive-definite Hessian $$H$$ and fixed optimum, each eigenmode scales by $$1-\eta\lambda_j(H)$$. Stability requires $$0<\eta<2/\lambda_{\max}(H)$$. Curvature changes adaptation speed even at equal write frequency; a nonconvex network need not admit this global Hessian model.
 
-## 11. Wall-clock timescales and coupled stability
+## Schedules and coupled stability
+{: id="11-wall-clock-timescales-and-coupled-stability"}
 
-For a simple exponential trace updated once every $$k$$ base steps with decay $$\beta\in(0,1)$$, a contribution's weight after $$m$$ updates is proportional to $$\beta^m$$. Its half-life in base steps is
+An exponential trace written every $$k$$ base steps with decay $$\beta\in(0,1)$$ retains weight proportional to $$\beta^m$$ after $$m$$ writes. Its base-step half-life is
 
 $$
 h_{\mathrm{base}}=k\frac{\log(1/2)}{\log\beta}.
 $$
 
-A frequency number by itself loses schedule information. Two modules can have the same number of writes in a long interval while one performs them in bursts and another spreads them uniformly. Their recency response and peak update latency can differ.
+Equal long-run write counts can hide bursty versus uniform schedules. A module may perform many writes together or spread them through the interval, changing recency response and peak update latency even when empirical frequency agrees.
 
-For a coupled linear approximation $$z_{t+1}=A_tz_t$$ with a schedule of period $$k$$, the state at period boundaries follows $$z_{(m+1)k}=Pz_{mk}$$, where
+For the coupled linear system $$z_{t+1}=A_tz_t$$ with period $$k$$, boundaries obey $$z_{(m+1)k}=Pz_{mk}$$ with
 
 $$
 P=A_{k-1}\cdots A_1A_0.
 $$
 
-Asymptotic stability of this finite-dimensional periodic linear system is equivalent to $$\rho(P)<1$$, with $$\rho$$ the spectral radius. Testing each module independently does not establish stability of their coupled product. This observation cautions against claiming that slow modules are automatically stable merely because they update less often.
+This finite-dimensional periodic system is asymptotically stable exactly when $$\rho(P)<1$$, where $$\rho$$ is the spectral radius. Individually stable modules need not give a stable product.
 
 Under constant per-module read/write costs, an average compute model is
 
@@ -251,21 +261,21 @@ $$
 \overline C=\sum_j C_{\mathrm{read},j}+\sum_j f_jC_{\mathrm{write},j}.
 $$
 
-It ignores synchronization, batching, and memory traffic, so it is a planning model. Peak latency can be much larger when several slow writes coincide. Measure average compute, tail latency, and persistent-state size separately. Report the reset lifetime of every state and whether targets or self-supervised signals are available at each write.
+This planning model omits synchronization, batching, and memory traffic. Coincident writes increase peak latency; average compute, tail latency, state size, reset lifetime, and available learning signals remain distinct measurements.
 
-## 12. What a Hope replication must establish
+## Hope replication
+{: id="12-what-a-hope-replication-must-establish"}
 
-A faithful replication needs the paper's actual self-modifying module, Continuum Memory System wiring, objectives, context flows, and update schedule. A generic gated recurrent update is useful for teaching state dynamics but does not establish that wiring. Likewise, a standard Adam recurrence explains optimizer memory without reproducing a newly proposed optimizer.
+A replication requires the actual self-modifying module, Continuum Memory System wiring, objectives, context flows, and schedule. Generic recurrence and standard Adam illustrate mechanisms without reproducing those components.
 
-Compare language modeling, recall, and continual adaptation as separate tasks. Specify parameter count, training tokens, initialization, optimizer, context length, state-reset policy, and all available supervision. Ablate self-modification, update frequency, memory capacity, and gradient-through-update separately where possible. A gain at a fixed model scale can result from more compute or more state; match those resources before attributing it to nested structure.
+Separate ablations of self-modification, frequency, capacity, and gradient-through-update distinguish nested structure from extra resources. Comparisons need matched parameter counts, training tokens, initialization, optimizers, context lengths, supervision, and reset policies.
 
-The central theoretical contribution to understand is the representation of interacting learning levels. The practical claim to evaluate is whether a particular realization improves retention, adaptation, or efficiency under a defined stream. Keeping those two statements separate makes the framework testable.
+The theoretical model organizes interacting learning levels; a particular implementation must demonstrate retention, adaptation, or efficiency on a defined stream.
 
-## References and current scope
+## References
+{: id="references-and-current-scope"}
 
 - [Behrouz et al., Nested Learning](https://arxiv.org/abs/2512.24695).
 - [Author-hosted full paper](https://abehrouz.github.io/files/NL.pdf).
 - [Google Research overview](https://research.google/blog/introducing-nested-learning-a-new-ml-paradigm-for-continual-learning/).
 - [Adam](https://arxiv.org/abs/1412.6980) and [Titans](https://arxiv.org/abs/2501.00663).
-
-The revision separates exact standard recurrences, explanatory constructions, and the authors' empirical claims. This distinction makes the theory usable without presenting an illustrative model as a verified architecture.

@@ -8,11 +8,10 @@ layout: note-base
     <a class="breadcrumb" href="{{ home_url | relative_url }}">{% if korean %}← 전체 글{% else %}← All notes{% endif %}</a>
     <div class="card-topics">{% for tag in page.tags %}<a href="{{ tags_url | relative_url }}#{{ tag | slugify }}">{{ tag }}</a>{% endfor %}</div>
     <h1>{{ page.title | escape }}</h1>
-    <p class="post-description">{{ page.subtitle | escape }}</p>
     <div class="post-meta"><time datetime="{{ page.date | date_to_xmlschema }}">{% if korean %}{{ page.date | date: '%Y년 %-m월 %-d일' }}{% else %}{{ page.date | date: '%B %-d, %Y' }}{% endif %}</time><span aria-hidden="true">·</span><span>{% if korean %}약 {{ content | number_of_words | divided_by: 180 | plus: 1 }}분{% else %}{{ content | number_of_words | divided_by: 180 | plus: 1 }} min read{% endif %}</span><span aria-hidden="true">·</span><span>{{ site.author.name }}</span></div>
-    {% if page.last_modified_at %}<p class="revision-date">{% if korean %}수정 {{ page.last_modified_at | date: '%Y년 %-m월 %-d일' }} · 출처 확인 {{ page.sources_checked_at | default: page.last_modified_at | date: '%Y년 %-m월 %-d일' }}{% else %}Revised {{ page.last_modified_at | date: '%B %-d, %Y' }} · Sources checked through {{ page.sources_checked_at | default: page.last_modified_at | date: '%B %-d, %Y' }}{% endif %}</p>{% endif %}
+    {% if page.last_modified_at %}<p class="revision-date">{% if korean %}수정 {{ page.last_modified_at | date: '%Y-%m-%d' }} · 출처 확인 {{ page.sources_checked_at | default: page.last_modified_at | date: '%Y-%m-%d' }}{% else %}Updated {{ page.last_modified_at | date: '%Y-%m-%d' }} · Sources {{ page.sources_checked_at | default: page.last_modified_at | date: '%Y-%m-%d' }}{% endif %}</p>{% endif %}
   </header>
-  <details class="toc" open><summary>{% if korean %}이 글의 내용{% else %}On this page{% endif %}</summary><nav id="toc-list" aria-label="{% if korean %}목차{% else %}Table of contents{% endif %}"></nav></details>
+  <details class="toc"><summary>{% if korean %}목차{% else %}Contents{% endif %}</summary><nav id="toc-list" aria-label="{% if korean %}목차{% else %}Table of contents{% endif %}"></nav></details>
   <div class="article-content" id="article-content">{{ content }}</div>
   <footer class="post-footer"><p>{% if korean %}수정할 내용을 발견하셨나요? <a href="https://github.com/hongjun7/logs/issues">이슈 남기기 ↗</a>{% else %}Found a correction? <a href="https://github.com/hongjun7/logs/issues">Open an issue ↗</a>{% endif %}</p>
     {% if korean %}{% assign articles = site.pages | where: 'lang', 'ko' | where: 'layout', 'article' | sort: 'translation_key' %}{% else %}{% assign articles = site.posts | sort: 'date' %}{% endif %}

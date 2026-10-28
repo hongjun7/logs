@@ -2,30 +2,30 @@
 lang: en
 translation_key: 2026-03-01-BlockRank
 translation_url: /ko/2026/03/01/BlockRank.html
-title: "BlockRank: Sparse Attention for Scalable In-Context Ranking"
+title: "BlockRank"
 tags: ["machine-learning", "retrieval", "attention"]
-subtitle: "Derive the directional block mask and conditional linear scaling, then explain attention supervision, direct ranking, and the limits of the reported speedup."
-last_modified_at: 2026-10-11
+subtitle: "Sparse document attention and supervised ranking without autoregressive decoding."
+last_modified_at: 2026-10-29
 sources_checked_at: 2026-10-11
 ---
 
-> **The idea in one minute.** BlockRank lets each candidate document read itself and a shared instruction prefix, then lets final query tokens read all candidates. This avoids direct document-to-document attention. A supervised attention signal can rank documents during a partial forward pass, eliminating answer-token decoding for that ranking task.
+BlockRank reranks candidate documents with sparse attention and a supervised attention readout. Documents read a shared prefix and themselves; final query tokens compare all candidates, allowing ranking without answer-token decoding.
 
-**Reading path.** Read the prompt order and mask carefully before the complexity calculation. Then follow the attention-mass loss and evaluation discussion. Prerequisites are matrix multiplication, softmax, and retrieval. The mask below is directional: which tokens read which tokens is the central design choice.
+## Candidate layout
+{: id="1-reranking-a-shortlist"}
 
-## 1. Reranking a shortlist
-
-A first-stage retriever returns candidates $$D_q=(d_1,\ldots,d_N)$$ from a much larger corpus. An in-context ranker processes an instruction, those documents, and a final query segment. The relevant order is
+A first-stage retriever supplies $$D_q=(d_1,\ldots,d_N)$$. The ranker places instructions before the documents and a final query segment:
 
 $$
 P=I\;\Vert\;d_1\;\Vert\;\cdots\;\Vert\;d_N\;\Vert\;q.
 $$
 
-The instruction prefix may already contain the question, while final query tokens provide the readout positions. Keeping these two occurrences distinct resolves an apparent confusion: documents can be conditioned on a query in the prefix without attending backward to a final query segment that has not yet appeared.
+The prefix and final query play different roles. The prefix can already contain the question. Documents are then query-conditioned even though they cannot read the later query segment, whose tokens provide readout positions.
 
-Each document also has a stable identifier. The task is to select or rank candidates, not retrieve documents that never entered the shortlist. First-stage recall limits end-to-end retrieval quality. [Scalable In-context Ranking with Generative Models](https://arxiv.org/abs/2510.05396).
+Stable identifiers distinguish candidates and connect scores to returned documents. First-stage recall bounds the end-to-end result: reranking cannot recover omitted documents. [Scalable In-context Ranking with Generative Models](https://arxiv.org/abs/2510.05396).
 
-## 2. Attention and a directional mask
+## Directional attention
+{: id="2-attention-and-a-directional-mask"}
 
 For one head with query and key matrices $$Q,K$$ and value matrix $$V$$,
 
@@ -34,9 +34,9 @@ $$
 =\operatorname{softmax}\left(\frac{QK^\top}{\sqrt{d_k}}+M\right)V.
 $$
 
-A permitted pair has mask value zero; a forbidden pair has $$-\infty$$. Rows denote tokens doing the reading, and columns denote tokens being read. Segment order is instruction, documents, final query.
+Mask entries are zero for permitted pairs and $$-\infty$$ otherwise. Rows read columns; segments follow instruction–documents–query order.
 
-A structural mask is
+The block mask is
 
 $$
 M=\begin{bmatrix}
@@ -48,13 +48,14 @@ C_I&-\infty&-\infty&\cdots&-\infty\\
 \end{bmatrix},
 $$
 
-where diagonal blocks $$C$$ retain within-segment causal order. Each zero or $$-\infty$$ denotes a whole compatible block. Instruction tokens read only earlier instruction tokens. A document reads the instruction and its own earlier tokens. Final query tokens read the prefix, every document, and their own earlier tokens. There are no document-to-final-query or document-to-other-document edges.
+Diagonal blocks $$C$$ preserve within-segment causality; zero and $$-\infty$$ denote compatible whole blocks. Instructions read earlier instructions. Documents read the prefix and their own past. Final query tokens read the prefix, all documents, and their own past.
 
-This corrects a symmetric-block picture that would accidentally allow information paths the architecture removes. A drawing with query↔document arrows can obscure the key asymmetry.
+No document reads another document or the final query. This asymmetry determines the information flow.
 
-## 3. Deriving the scaling claim
+## Complexity
+{: id="3-deriving-the-scaling-claim"}
 
-Let instruction length be $$p$$, final query length $$q$$, and document lengths $$\ell_1,\ldots,\ell_N$$. Dense attention on total length $$L=p+q+\sum_i\ell_i$$ requires $$O(L^2)$$ token-pair work per layer, ignoring feature-dimension factors.
+For prefix length $$p$$, final-query length $$q$$, and document lengths $$\ell_1,\ldots,\ell_N$$, total length is $$L=p+q+\sum_i\ell_i$$. Dense attention costs $$O(L^2)$$ token-pair work per layer, omitting feature dimensions.
 
 The permitted pair count for the block construction is of order
 
@@ -69,21 +70,23 @@ $$
 O\big(N\ell^2+Np\ell+Nq\ell+p^2+q^2+pq\big),
 $$
 
-which is linear in the number of documents $$N$$. The claim is **conditional linear scaling in candidate count**, not linear complexity in every variable. Doubling one document's length can still increase its self-attention cost quadratically.
+This scales linearly in $$N$$ only under those bounds. An individual document still has quadratic self-attention cost in its length: doubling its length does not preserve linear cost.
 
-For a toy $$p=q=32$$, $$N=100$$, and $$\ell=128$$, dense token-pair count is about $$(12{,}864)^2\approx165.48$$ million. The expression above gives about $$2.46$$ million permitted pairs. These are illustrative counts using a simplified full-block convention. They are not a predicted 67-fold speedup: projections, feed-forward layers, kernels, padding, memory access, and launch overhead also cost time.
+With $$p=q=32$$, $$N=100$$, and $$\ell=128$$, dense attention has about $$(12{,}864)^2\approx165.48$$ million pairs versus $$2.46$$ million permitted pairs under a simplified full-block count. This does not predict a 67-fold speedup: projections, feed-forward layers, padding, kernels, memory access, and launches remain.
 
-Multiplying a dense attention matrix by a sparse mask after computing it does not obtain the computational saving. The implementation must avoid materializing the forbidden blocks or use an appropriate chunked/sparse attention kernel.
+Savings require avoiding forbidden blocks with sparse or chunked kernels; masking an already computed dense matrix saves no pair computation.
 
-## 4. Local positions and candidate order
+## Position encoding
+{: id="4-local-positions-and-candidate-order"}
 
-A global document position can introduce list-order bias. BlockRank uses a local document position space shared across blocks, following the instruction positions, and a distinct final-query position region. The goal is to treat document position consistently across permutations.
+BlockRank shares local document positions across blocks after the instruction positions and reserves a separate final-query region, reducing list-position bias.
 
-Architectural symmetry is a useful property, but full practical invariance also depends on identifier formatting, truncation, padding, implementation, and numerical ties. Test candidate permutations. If the instruction includes the query, document representations depend on that query; they cannot simply be cached once for every future query. Query-independent caching and query-conditioned reading represent a real tradeoff.
+Identifiers, truncation, padding, implementation, and numerical ties can still affect permutation invariance. A query-bearing prefix also makes document representations query-dependent, preventing a single cache for all queries.
 
-## 5. Turn attention into a supervised ranking signal
+## Attention supervision
+{: id="5-turn-attention-into-a-supervised-ranking-signal"}
 
-At a selected layer $$\ell^*$$, choose signal-carrying query tokens $$S$$. For each such token $$i$$, compute logits to document tokens $$j$$ and normalize over **document tokens only**:
+At layer $$\ell^*$$, query carrier tokens $$S$$ score document tokens. For carrier $$i$$ and document token $$j$$, normalize only over document tokens:
 
 $$
 z_{ij}=\frac{Q_iK_j^\top}{\sqrt{d_k}},\qquad
@@ -96,7 +99,7 @@ $$
 s_k=\sum_{i\in S}\sum_{j\in T_{d_k}}\alpha'_{ij}.
 $$
 
-A mean over carrier tokens differs by a fixed scale from this sum and can affect the loss temperature. With the sum convention, $$\sum_k s_k=\vert S\vert $$. Attention mass is a relative ranking signal, not automatically a calibrated probability of relevance.
+Using a carrier mean instead changes the scale and effective loss temperature. Under this sum, $$\sum_k s_k=\vert S\vert $$. Mass ranks candidates without necessarily calibrating relevance probabilities.
 
 For labeled positive document $$d^+$$, a contrastive loss is
 
@@ -112,34 +115,36 @@ $$
 \mathcal L=\mathcal L_{\mathrm{NTP}}+\lambda\mathcal L_{\mathrm{aux}},\qquad\lambda\ge0.
 $$
 
-These definitions explain what attention supervision adds. Unsupervised attention in an arbitrary model is not guaranteed to rank by relevance. Token-level normalization and document aggregation also mean document length can influence mass; evaluate length distributions and truncation rather than assuming that the signal is length-neutral.
+The auxiliary loss trains the readout to favor a labeled positive while next-token prediction trains the answer output. Supervision gives the attention readout its ranking role; arbitrary pretrained attention has no such guarantee. Token normalization and document aggregation can introduce length effects, so length distribution and truncation remain relevant.
 
-## 6. Direct inference without decoding
+## Direct readout
+{: id="6-direct-inference-without-decoding"}
 
-At inference, run the network only through the chosen layer, compute the document masses, and return $$\arg\max_k s_k$$ or sort all scores. This avoids producing a textual ranking token by token and can avoid upper layers beyond the readout layer.
+Inference stops at the chosen layer, computes masses, and returns $$\arg\max_k s_k$$ or a sorted list. It avoids autoregressive ranking tokens and can skip subsequent layers.
 
-The full operation still reads all retained candidates. Its cost includes document processing and cross-attention from final query tokens. It is not an index lookup over millions of documents. For a corpus-scale system, use a first-stage retriever and measure reranking separately.
+Every retained candidate still requires document processing and query-to-document attention. Early readout can remove later network and decoding work, not the cost of reading the shortlist. Corpus-scale retrieval therefore needs a first-stage index.
 
-Sorting $$N$$ scores costs $$O(N\log N)$$ for a full ordering; selecting only the maximum costs $$O(N)$$. Thus “linear ranking” often refers to model scoring, with the requested output operation considered separately.
+A full ordering of $$N$$ scores costs $$O(N\log N)$$; maximum selection costs $$O(N)$$. Linear model scoring and output sorting are separate costs.
 
-## 7. Performance evidence and its boundary
+## Reported performance
+{: id="7-performance-evidence-and-its-boundary"}
 
-The paper's abstract reports a $$4.7\times$$ inference improvement for a 100-document MSMARCO setting and approximately 500 documents, around 100K context tokens, processed within a second in its experiment. These are **author-reported measurements** with a particular model, hardware, formatting, and baseline. This site has not rerun them. [Paper and experimental setup](https://arxiv.org/html/2510.05396v1).
+The authors report $$4.7\times$$ faster inference on 100-document MSMARCO and about 500 documents, or 100K context tokens, within one second. These model-, hardware-, formatting-, and baseline-specific measurements were not reproduced here. [Experimental setup](https://arxiv.org/html/2510.05396v1).
 
-A new comparison should control the shortlist, token lengths, base model, training examples, precision, device, and output requirement. Compare dense fine-tuning, sparse attention without auxiliary supervision, attention-only readout, and autoregressive readout. Measure quality such as nDCG or MRR alongside p50/p95 latency, peak memory, and first-stage recall.
+Dense fine-tuning, unsupervised sparse attention, supervised attention readout, and autoregressive readout isolate different contributions. Matched candidates, lengths, models, training data, precision, hardware, and outputs support comparisons of nDCG/MRR, p50/p95 latency, peak memory, and first-stage recall.
 
-Generalizing from text reranking to knowledge-graph blocks or mobile retrieval is a proposal. It requires new representations, available kernels, and a matched evaluation; the paper's text experiments are not evidence that an on-device graph system is already fast or accurate.
+Knowledge-graph blocks and mobile retrieval require new representations, kernels, and matched experiments; the reported text results do not establish those extensions.
 
-## 8. Connections to decision models
+## Decision scores
+{: id="8-connections-to-decision-models"}
 
-BlockRank and typed decision models share an engineering motive: read structured inputs and extract a useful score without generating a prose answer. Their input boundaries differ. BlockRank's final query compares candidate documents; a multi-question decision service may isolate separate questions sharing one state. Do not infer identical architecture from similar output formats.
+Like typed decision models, BlockRank extracts scores without prose generation. Its final query compares documents; a multi-question service may instead isolate questions over shared state. Similar outputs do not imply identical information flow.
 
-In both cases, sparse attention is a statement about information flow and compute. The score's meaning, calibration, and downstream threshold policy require separate training and evaluation.
+Sparse attention specifies communication and compute. Calibration and downstream thresholds need their own training and evaluation.
 
-## References and current scope
+## References
+{: id="references-and-current-scope"}
 
 - [Gupta et al., Scalable In-context Ranking with Generative Models](https://arxiv.org/abs/2510.05396).
 - [Full HTML paper, including mask, loss, and complexity analysis](https://arxiv.org/html/2510.05396v1).
 - [BEIR](https://github.com/beir-cellar/beir): retrieval evaluation.
-
-This revision corrects prompt order, directional masking, and the assumptions behind linear scaling. It also separates theoretical pair counts from measured end-to-end speed.
