@@ -23,6 +23,11 @@ def main():
             continue
         english = original.read_text().split('---', 2)[2]
         korean = translation.read_text().split('---', 2)[2]
+        metadata = translation.read_text().split('---', 2)[1]
+        date = re.search(r'^date:\s*(\d{4}-\d{2}-\d{2})', metadata, re.M)
+        key = re.search(r'^translation_key:\s*(\S+)', metadata, re.M)
+        if not date or not key or key.group(1) != original.stem or not key.group(1).startswith(date.group(1)):
+            failures.append(f'{original.name}: translation sort key must start with its ISO date')
         row = {'article': original.stem}
         for name, pattern in PATTERNS.items():
             source = Counter(re.findall(pattern, english))

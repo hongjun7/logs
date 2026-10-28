@@ -3,7 +3,7 @@ layout: note-base
 ---
 {% assign korean = false %}
 {% if page.lang == 'ko' %}{% assign korean = true %}{% endif %}
-{% if korean %}{% assign posts = site.pages | where: 'lang', 'ko' | where: 'layout', 'article' | sort: 'date' | reverse %}{% else %}{% assign posts = paginator.posts | default: site.posts %}{% endif %}
+{% if korean %}{% assign posts = site.pages | where: 'lang', 'ko' | where: 'layout', 'article' | sort: 'translation_key' | reverse %}{% else %}{% assign posts = paginator.posts | default: site.posts %}{% endif %}
 <h1 class="visually-hidden">{% if korean %}글{% else %}Posts{% endif %}</h1>
 <section class="post-feed" aria-label="{% if korean %}연구와 개발 글{% else %}Research articles{% endif %}">
   <div class="feed-label"><span>{% if korean %}최근 글{% elsif paginator.previous_page %}More notes{% else %}Latest notes{% endif %}</span><span>{% if korean %}총 {{ posts.size }}편{% else %}{{ site.posts.size }} articles{% endif %}</span></div>

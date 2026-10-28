@@ -1,7 +1,7 @@
 ---
 layout: note-base
 ---
-{% if page.lang == 'ko' %}{% assign korean = true %}{% assign articles = site.pages | where: 'lang', 'ko' | where: 'layout', 'article' | sort: 'date' | reverse %}{% else %}{% assign korean = false %}{% assign articles = site.posts %}{% endif %}
+{% if page.lang == 'ko' %}{% assign korean = true %}{% assign articles = site.pages | where: 'lang', 'ko' | where: 'layout', 'article' | sort: 'translation_key' | reverse %}{% else %}{% assign korean = false %}{% assign articles = site.posts %}{% endif %}
 <header class="page-header"><p class="eyebrow">{% if korean %}연도별 모아보기{% else %}THE NOTEBOOK{% endif %}</p><h1>{% if korean %}전체 글{% else %}Archive{% endif %}</h1><p>{% if korean %}총 {{ articles.size }}편의 글을 연도별로 정리했습니다.{% else %}{{ articles.size }} articles, organized by year.{% endif %}</p></header>
 {% assign years = articles | group_by_exp: 'post', 'post.date | date: "%Y"' %}
 {% for year in years %}<section class="archive-year"><h2>{{ year.name }} <small>{{ year.items.size }}</small></h2><ul class="archive-list">{% for post in year.items %}<li><time datetime="{{ post.date | date_to_xmlschema }}">{% if korean %}{{ post.date | date: '%m-%d' }}{% else %}{{ post.date | date: '%b %-d' }}{% endif %}</time><a href="{{ post.url | relative_url }}">{{ post.title | escape }}</a></li>{% endfor %}</ul></section>{% endfor %}

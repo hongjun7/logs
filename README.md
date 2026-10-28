@@ -75,6 +75,8 @@ does not imply that its sources were checked again. Translate the full body,
 including caveats and figure descriptions, and preserve equations, code, cited
 URLs, and measured numbers. Each pair shares one `translation_key` and identical
 tags. Static pages require an explicit `date`; filenames alone do not set it.
+Korean listings sort by the ISO-date-prefixed `translation_key` so the GitHub
+Pages Jekyll 3 runtime never compares mixed YAML `Date` and timestamp values.
 
 The EN / 한국어 links lead to the same article in the other language, including
 with JavaScript disabled. Navigation, article neighbors, archive, topics, and
