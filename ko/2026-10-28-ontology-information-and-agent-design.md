@@ -1,6 +1,6 @@
 ---
 layout: article
-title: "온톨로지, Markdown 탐색, 에이전트: 수학적 정의와 정보량, 그리고 실험 근거"
+title: "온톨로지와 Agent"
 subtitle: "형식 의미론이 더하는 것, 정보이론으로 말할 수 있는 것과 없는 것, 온톨로지 설계·문서 탐색 연구의 성능과 한계를 구분한다."
 tags: ["ontology", "knowledge-graphs", "information-theory", "language-models", "agents"]
 lang: ko

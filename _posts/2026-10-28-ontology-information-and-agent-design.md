@@ -1,5 +1,5 @@
 ---
-title: "Ontologies, Markdown Navigation, and Agents: Definitions, Information, and Evidence"
+title: "Ontology and Agents"
 subtitle: "What formal semantics adds, what information theory does and does not imply, and what published ontology engineering and navigation experiments establish."
 tags: ["ontology", "knowledge-graphs", "information-theory", "language-models", "agents"]
 lang: en
