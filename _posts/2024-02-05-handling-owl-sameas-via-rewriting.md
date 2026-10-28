@@ -1,4 +1,7 @@
 ---
+lang: en
+translation_key: 2024-02-05-handling-owl-sameas-via-rewriting
+translation_url: /ko/2024/02/05/handling-owl-sameas-via-rewriting.html
 title: "Handling owl:sameAs via Rewriting: Equality Without Fact Explosion"
 tags: ["knowledge-graphs", "logic", "owl"]
 subtitle: "How quotient representations compress equality closure, why rules must also be rewritten, and how SPARQL multiplicities survive expansion."

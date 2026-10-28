@@ -1,0 +1,22 @@
+{
+  "date": "2026-10-28",
+  "scope": "Local CUA in-app browser, actual rendered DOM; all article editions",
+  "article_editions": 26,
+  "viewports": [
+    {
+      "width": 1280,
+      "height": 900
+    },
+    {
+      "width": 390,
+      "height": 844
+    }
+  ],
+  "article_viewport_checks": 52,
+  "rendered_math_per_viewport": 1576,
+  "math_errors": 0,
+  "unrendered_math_wrappers": 0,
+  "document_horizontal_overflow": 0,
+  "scope_limit": "Local browser checks do not establish publication. UX interactions separately recorded.",
+  "toy_math_checks": "four valuations -> three after implication -> one after P; log2(4/3) verified"
+}

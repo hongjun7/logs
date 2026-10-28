@@ -1,0 +1,8 @@
+---
+layout: note-base
+---
+{% if page.lang == 'ko' %}{% assign korean = true %}{% assign articles = site.pages | where: 'lang', 'ko' | where: 'layout', 'article' | sort: 'date' | reverse %}{% else %}{% assign korean = false %}{% assign articles = site.posts %}{% endif %}
+<header class="page-header"><p class="eyebrow">{% if korean %}주제별 모아보기{% else %}EXPLORE BY TOPIC{% endif %}</p><h1>{% if korean %}태그{% else %}Tags{% endif %}</h1><p>{% if korean %}같은 주제를 다룬 글을 함께 살펴보세요.{% else %}Follow an idea across the notebook.{% endif %}</p></header>
+{% assign tags = site.tags | sort %}
+<nav class="tag-cloud" aria-label="{% if korean %}주제{% else %}Topics{% endif %}">{% for tag in tags %}{% assign tagged = articles | where_exp: 'post', 'post.tags contains tag[0]' %}<a href="#{{ tag[0] | slugify }}">{{ tag[0] }} <span>{{ tagged.size }}</span></a>{% endfor %}</nav>
+{% for tag in tags %}{% assign tagged = articles | where_exp: 'post', 'post.tags contains tag[0]' %}<section class="tag-section" id="{{ tag[0] | slugify }}"><h2>{{ tag[0] }}</h2><ul class="topic-list">{% for post in tagged %}<li><a href="{{ post.url | relative_url }}">{{ post.title | escape }}</a><time datetime="{{ post.date | date_to_xmlschema }}">{{ post.date | date: '%Y-%m-%d' }}</time></li>{% endfor %}</ul></section>{% endfor %}

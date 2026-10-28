@@ -1,0 +1,10 @@
+---
+layout: note-base
+---
+{% assign korean = false %}{% if page.lang == 'ko' %}{% assign korean = true %}{% endif %}
+<header class="page-header"><p class="eyebrow">{% if korean %}필요한 내용 찾기{% else %}FIND AN IDEA{% endif %}</p><h1>{% if korean %}검색{% else %}Search{% endif %}</h1><p>{% if korean %}한국어 글의 제목, 태그, 본문을 검색합니다.{% else %}Search titles, topics, and the full text of every English article.{% endif %}</p></header>
+<label class="search-label" for="search-input">{% if korean %}검색어{% else %}Search the notebook{% endif %}</label>
+<input id="search-input" class="search-input" type="search" placeholder="{% if korean %}예: 확률, Wasserstein, 카디널리티…{% else %}Try calibration, Wasserstein, or cardinality…{% endif %}" autocomplete="off" data-index="{{ '/search.json' | relative_url }}" data-lang="{{ page.lang | default: 'en' }}">
+<p id="search-status" class="search-status" role="status" aria-live="polite">{% if korean %}검색할 단어나 구문을 입력하세요.{% else %}Enter a word or phrase to start.{% endif %}</p>
+<div id="search-results" class="post-feed"></div>
+<noscript><p>{% if korean %}검색에는 JavaScript가 필요합니다. <a href="{{ '/ko/archive.html' | relative_url }}">전체 글</a>이나 <a href="{{ '/ko/tags.html' | relative_url }}">태그</a>에서 글을 찾을 수도 있습니다.{% else %}Search needs JavaScript. You can also browse the <a href="{{ '/archive.html' | relative_url }}">archive</a> or <a href="{{ '/tags.html' | relative_url }}">tags</a>.{% endif %}</p></noscript>

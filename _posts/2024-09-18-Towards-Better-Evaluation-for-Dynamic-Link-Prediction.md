@@ -1,4 +1,7 @@
 ---
+lang: en
+translation_key: 2024-09-18-Towards-Better-Evaluation-for-Dynamic-Link-Prediction
+translation_url: /ko/2024/09/18/Towards-Better-Evaluation-for-Dynamic-Link-Prediction.html
 title: "Dynamic Link Prediction: Time, Negative Samples, and Honest Evaluation"
 tags: ["graphs", "evaluation", "temporal-graphs"]
 subtitle: "Why temporal prediction can look solved under easy negatives, how EdgeBank exposes memorization, and how modern temporal benchmarks define a reproducible protocol."

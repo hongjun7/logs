@@ -1,4 +1,7 @@
 ---
+lang: en
+translation_key: 2024-03-18-GRL-survey
+translation_url: /ko/2024/03/18/GRL-survey.html
 title: "Reinforcement Learning on Graphs: States, Policies, and Evaluation"
 tags: ["reinforcement-learning", "graphs", "graph-neural-networks"]
 subtitle: "A unified mathematical view of graph decisions, from message passing and constrained actions to policy gradients, knowledge-graph traversal, and reliable evaluation."

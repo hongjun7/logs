@@ -1,4 +1,7 @@
 ---
+lang: en
+translation_key: 2024-10-29-Accurate-Sampling-Based-Cardinality-Estimation
+translation_url: /ko/2024/10/29/Accurate-Sampling-Based-Cardinality-Estimation.html
 title: "Sampling-Based Cardinality Estimation: Unbiasedness, Consistency, and Complex Queries"
 tags: ["databases", "cardinality", "probability"]
 subtitle: "Derive inverse-probability estimates for joins, explain why DISTINCT changes the sample space, and separate asymptotic convergence from finite-budget accuracy."

@@ -1,4 +1,7 @@
 ---
+lang: en
+translation_key: 2026-03-01-BlockRank
+translation_url: /ko/2026/03/01/BlockRank.html
 title: "BlockRank: Sparse Attention for Scalable In-Context Ranking"
 tags: ["machine-learning", "retrieval", "attention"]
 subtitle: "Derive the directional block mask and conditional linear scaling, then explain attention supervision, direct ranking, and the limits of the reported speedup."

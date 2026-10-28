@@ -1,4 +1,7 @@
 ---
+lang: en
+translation_key: 2024-02-10-characteristic-sets
+translation_url: /ko/2024/02/10/characteristic-sets.html
 title: "Characteristic Sets: When RDF Cardinality Is Exact, and When It Is Estimated"
 tags: ["knowledge-graphs", "databases", "cardinality"]
 subtitle: "Derive star-query counts from predicate co-occurrence, then expose the multiplicity, correlation, and compression assumptions behind the estimator."

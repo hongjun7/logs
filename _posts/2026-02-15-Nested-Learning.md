@@ -1,4 +1,7 @@
 ---
+lang: en
+translation_key: 2026-02-15-Nested-Learning
+translation_url: /ko/2026/02/15/Nested-Learning.html
 title: "Nested Learning: Memory, Optimization, and Multiple Timescales"
 tags: ["machine-learning", "memory", "continual-learning"]
 subtitle: "Understand Nested Learning through explicit state updates, associative memory, optimizer traces, and the distinction between a general mathematical model and the Hope architecture."

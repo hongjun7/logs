@@ -209,6 +209,7 @@ defaults:
       type: posts
     values:
       layout: article
+      lang: en
       sharing: false
       license: false
       aside:

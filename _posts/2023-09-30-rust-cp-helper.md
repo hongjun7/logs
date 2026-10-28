@@ -1,4 +1,7 @@
 ---
+lang: en
+translation_key: 2023-09-30-rust-cp-helper
+translation_url: /ko/2023/09/30/rust-cp-helper.html
 title: "Competitive Programming with Rust: Invariants, Complexity, and a Reliable Workflow"
 tags: ["engineering", "rust", "algorithms"]
 subtitle: "A practical path from input parsing and integer bounds to graph algorithms, ownership, and reproducible contest tooling."

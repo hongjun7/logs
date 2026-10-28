@@ -1,4 +1,5 @@
 ---
 layout: none
 ---
-[{% for post in site.posts %}{"title":{{ post.title | jsonify }},"url":{{ post.url | relative_url | jsonify }},"date":{{ post.date | date: '%B %-d, %Y' | jsonify }},"tags":{{ post.tags | jsonify }},"description":{{ post.subtitle | jsonify }},"content":{{ post.content | strip_html | normalize_whitespace | jsonify }}}{% unless forloop.last %},{% endunless %}{% endfor %}]
+{% assign translations = site.pages | where: 'lang', 'ko' | where: 'layout', 'article' %}{% assign articles = site.posts | concat: translations %}
+[{% for post in articles %}{"title":{{ post.title | jsonify }},"url":{{ post.url | relative_url | jsonify }},"lang":{{ post.lang | default: 'en' | jsonify }},"translation_key":{{ post.translation_key | jsonify }},"date":{% if post.lang == 'ko' %}{{ post.date | date: '%Y년 %-m월 %-d일' | jsonify }}{% else %}{{ post.date | date: '%B %-d, %Y' | jsonify }}{% endif %},"tags":{{ post.tags | jsonify }},"description":{{ post.subtitle | jsonify }},"content":{{ post.content | strip_html | normalize_whitespace | jsonify }}}{% unless forloop.last %},{% endunless %}{% endfor %}]

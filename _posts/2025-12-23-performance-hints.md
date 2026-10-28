@@ -1,4 +1,7 @@
 ---
+lang: en
+translation_key: 2025-12-23-performance-hints
+translation_url: /ko/2025/12/23/performance-hints.html
 title: "Performance Hints in C++: Models, Measurements, and Tradeoffs"
 tags: ["engineering", "performance", "cpp"]
 subtitle: "Turn performance advice into testable hypotheses using Amdahl\u2019s law, memory traffic, allocation behavior, queueing, and reproducible experiments."

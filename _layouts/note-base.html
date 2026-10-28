@@ -1,11 +1,31 @@
+{% assign locale = page.lang | default: 'en' %}
+{% assign home_url = '/' %}
+{% assign archive_url = '/archive.html' %}
+{% assign search_url = '/search.html' %}
+{% assign tags_url = '/tags.html' %}
+{% assign en_url = page.url %}
+{% assign ko_url = page.translation_url %}
+{% if locale == 'ko' %}
+  {% assign home_url = '/ko/' %}
+  {% assign archive_url = '/ko/archive.html' %}
+  {% assign search_url = '/ko/search.html' %}
+  {% assign tags_url = '/ko/tags.html' %}
+  {% assign en_url = page.original_url %}
+  {% assign ko_url = page.url %}
+{% endif %}
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ locale }}" data-language="{{ locale }}">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% if page.title %}{{ page.title | escape }} · {% endif %}{{ site.title | escape }}</title>
   <meta name="description" content="{{ page.subtitle | default: site.description | strip_html | escape }}">
   <link rel="canonical" href="{{ page.url | absolute_url }}">
+  {% if en_url and ko_url %}
+  <link rel="alternate" hreflang="en" href="{{ en_url | absolute_url }}">
+  <link rel="alternate" hreflang="ko" href="{{ ko_url | absolute_url }}">
+  <link rel="alternate" hreflang="x-default" href="{{ en_url | absolute_url }}">
+  {% endif %}
   <link rel="alternate" type="application/atom+xml" title="{{ site.title | escape }}" href="{{ '/feed.xml' | relative_url }}">
   <link rel="icon" href="{{ '/favicon.ico' | relative_url }}">
   <link rel="stylesheet" href="{{ '/assets/css/notes.css' | relative_url }}">
@@ -34,21 +54,22 @@
   {% endif %}
 </head>
 <body id="top">
-  <a class="skip-link" href="#main">Skip to content</a>
+  <a class="skip-link" href="#main">{% if locale == 'ko' %}본문으로 건너뛰기{% else %}Skip to content{% endif %}</a>
   <header class="site-header">
-    <nav aria-label="Main navigation">
-      <div class="brand-group"><a class="brand" href="{{ '/' | relative_url }}">Logs<span class="brand-dot">.</span> hongjun7</a><button id="theme-toggle" type="button" aria-label="Switch to dark theme" title="Change theme"><svg viewBox="0 0 24 24" width="19" height="19" aria-hidden="true"><path d="M20 15.3A8.5 8.5 0 0 1 8.7 4 8.5 8.5 0 1 0 20 15.3Z"/></svg></button><span class="nav-divider" aria-hidden="true">|</span></div>
+    <nav aria-label="{% if locale == 'ko' %}주 메뉴{% else %}Main navigation{% endif %}">
+      <div class="brand-group"><a class="brand" href="{{ home_url | relative_url }}">Logs<span class="brand-dot">.</span> hongjun7</a><button id="theme-toggle" type="button" aria-label="{% if locale == 'ko' %}어두운 테마로 전환{% else %}Switch to dark theme{% endif %}" title="{% if locale == 'ko' %}테마 변경{% else %}Change theme{% endif %}"><svg viewBox="0 0 24 24" width="19" height="19" aria-hidden="true"><path d="M20 15.3A8.5 8.5 0 0 1 8.7 4 8.5 8.5 0 1 0 20 15.3Z"/></svg></button></div>
       <div class="nav-links">
-        <a href="{{ '/' | relative_url }}"{% if page.url == '/' %} aria-current="page"{% endif %}>Posts</a>
-        <a href="{{ '/archive.html' | relative_url }}"{% if page.url == '/archive.html' %} aria-current="page"{% endif %}>Archive</a>
-        <a href="{{ '/search.html' | relative_url }}"{% if page.url == '/search.html' %} aria-current="page"{% endif %}>Search</a>
-        <a href="{{ '/tags.html' | relative_url }}"{% if page.url == '/tags.html' %} aria-current="page"{% endif %}>Tags</a>
-        <a href="https://hongjun7.github.io/">About <span aria-hidden="true">↗</span></a>
+        <a href="{{ home_url | relative_url }}"{% if page.url == home_url %} aria-current="page"{% endif %}>{% if locale == 'ko' %}글{% else %}Posts{% endif %}</a>
+        <a href="{{ archive_url | relative_url }}"{% if page.url == archive_url %} aria-current="page"{% endif %}>{% if locale == 'ko' %}전체 글{% else %}Archive{% endif %}</a>
+        <a href="{{ search_url | relative_url }}"{% if page.url == search_url %} aria-current="page"{% endif %}>{% if locale == 'ko' %}검색{% else %}Search{% endif %}</a>
+        <a href="{{ tags_url | relative_url }}"{% if page.url == tags_url %} aria-current="page"{% endif %}>{% if locale == 'ko' %}태그{% else %}Tags{% endif %}</a>
+        <a href="https://hongjun7.github.io/">{% if locale == 'ko' %}소개{% else %}About{% endif %} <span aria-hidden="true">↗</span></a>
       </div>
+      {% if en_url and ko_url %}<div class="language-switch" role="group" aria-label="{% if locale == 'ko' %}언어 선택{% else %}Language{% endif %}"><a href="{{ en_url | relative_url }}" lang="en" hreflang="en" data-language-link="en"{% if locale == 'en' %} aria-current="true"{% endif %}>EN</a><span aria-hidden="true">/</span><a href="{{ ko_url | relative_url }}" lang="ko" hreflang="ko" data-language-link="ko"{% if locale == 'ko' %} aria-current="true"{% endif %}>한국어</a></div>{% endif %}
     </nav>
   </header>
   <main id="main" class="main{% if page.layout == 'article' %} article-main{% endif %}">{{ content }}</main>
-  <footer class="site-footer"><span>© {{ 'now' | date: '%Y' }} {{ site.author.name }}</span><span><a href="{{ '/feed.xml' | relative_url }}">RSS</a> · Built with Jekyll</span></footer>
-  <a class="back-top" href="#top" aria-label="Back to top">↑</a>
+  <footer class="site-footer"><span>© {{ 'now' | date: '%Y' }} {{ site.author.name }}</span><span><a href="{{ '/feed.xml' | relative_url }}">RSS</a> · {% if locale == 'ko' %}Jekyll로 제작{% else %}Built with Jekyll{% endif %}</span></footer>
+  <a class="back-top" href="#top" aria-label="{% if locale == 'ko' %}맨 위로{% else %}Back to top{% endif %}">↑</a>
 </body>
 </html>

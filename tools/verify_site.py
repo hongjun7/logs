@@ -91,7 +91,11 @@ def main():
         path = (SITE / post['url'][len(BASEURL):]).resolve()
         page = pages[path]
         stem = path.stem
-        sources = list((ROOT / '_posts').glob(f'*-{stem}.md'))
+        if post.get('lang') == 'ko':
+            sources = [ROOT / 'ko' / f"{post['translation_key']}.md"]
+            sources = [source for source in sources if source.is_file()]
+        else:
+            sources = list((ROOT / '_posts').glob(f'*-{stem}.md'))
         if len(sources) != 1:
             failures.append(f'{stem}: expected exactly one Markdown source')
             continue
@@ -108,7 +112,7 @@ def main():
             failures.append(f'{stem}: math count changed: {expected} source / {preserved} HTML')
         if page.tables != page.table_headers:
             failures.append(f'{stem}: table without a header; check for unescaped TeX pipes')
-    print(f'{len(posts)} posts, {total_math} preserved math expressions, {len(pages)} HTML pages')
+    print(f'{len(posts)} article language editions, {total_math} preserved math expressions, {len(pages)} HTML pages')
     print(f'Local links/assets, anchors, math counts, and table structure: {len(failures)} failures')
     for failure in failures:
         print(failure)

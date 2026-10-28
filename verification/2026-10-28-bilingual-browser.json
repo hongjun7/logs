@@ -1,0 +1,105 @@
+{
+  "date": "2026-10-28",
+  "scope": "Local Jekyll preview UX verification; this is not evidence of publication or a live GitHub Pages deployment.",
+  "preview": "http://127.0.0.1:4000/logs/",
+  "browser": "Codex in-app browser, CUA; dedicated tab 1",
+  "viewports": [
+    {
+      "width": 1280,
+      "height": 900
+    },
+    {
+      "width": 320,
+      "height": 780
+    },
+    {
+      "width": 390,
+      "height": 844
+    }
+  ],
+  "checks": {
+    "removed_introduction": "English home visibly starts at the latest article cards; neither requested introduction sentence remains.",
+    "english_pagination": {
+      "logical_articles": 13,
+      "home_cards": 8,
+      "page2_cards": 5,
+      "older_url": "/logs/page2/",
+      "newer_url": "/logs/",
+      "result": "passed"
+    },
+    "home_language_switch": "English/Korean real-anchor links are present and localized navigation follows the URL language.",
+    "article_language_round_trip": {
+      "english_url": "/logs/2026/10/10/jev-kev-decision-models.html",
+      "korean_url": "/logs/ko/2026/10/10/jev-kev-decision-models.html",
+      "result": "EN to KO and KO to EN both passed"
+    },
+    "korean_search": {
+      "query": "확률",
+      "observed_results": 8,
+      "all_result_urls_start_with": "/logs/ko/",
+      "no_match_query_result": "0편의 글을 찾았습니다.",
+      "result": "passed on the 12 translated pre-existing articles"
+    },
+    "english_search": {
+      "query": "probability",
+      "observed_results": 7,
+      "no_korean_result_urls": true,
+      "no_match_query_result": "0 articles found.",
+      "result": "passed"
+    },
+    "korean_archive_and_topics": {
+      "archive_articles_at_check": 12,
+      "topic_links_at_check": 38,
+      "all_article_links_korean": true,
+      "result": "passed before the new ontology translation was added"
+    },
+    "theme": "Korean theme button changed light to dark, its label changed to 밝은 테마로 전환, dark theme survived reload, and the button returned it to light.",
+    "jevs_korean_probability_explorer": {
+      "weights_100_30_10": "확률 (0.714, 0.214, 0.071). 선택 신뢰도 0.571. 평균 수준 0.357. 점수 신뢰도 0.464.",
+      "all_zero_weights": "Uniform fallback displayed in Korean: probabilities (0.333, 0.333, 0.333), Choice confidence 0.000, mean 1.000, Score confidence 0.000.",
+      "operation": "Keyboard End and Home on the visible range controls; output and bars updated.",
+      "result": "passed"
+    },
+    "jevs_korean_neighbors": "The visible previous-article link targets /logs/ko/2026/03/01/BlockRank.html.",
+    "mobile_320": "An observed two-line brand was fixed with non-wrapping brand text and narrower header padding. Rechecked screenshot shows brand, theme, and EN/한국어 in one row with navigation below; no horizontal page overflow.",
+    "mobile_390_article": {
+      "viewport_width": 390,
+      "document_width": 375,
+      "math_containers": 150,
+      "math_errors": 0,
+      "wide_table_wrapper_width": 333,
+      "wide_table_content_widths": [
+        400,
+        500,
+        400,
+        400
+      ],
+      "result": "passed; wide tables scroll inside wrappers"
+    },
+    "screenshots": "Actual CUA screenshots inspected for desktop English/Korean home, mobile 320 home and search/probability explorer, mobile 390 archive/topics and Korean article header. Images were emitted by CUA during verification.",
+    "viewport_cleanup": "Temporary browser viewport override reset after verification.",
+    "final_thirteen_pair_followup": {
+      "tab": "Dedicated IAB tab 2; tab 1 left for article math QA; no viewport override",
+      "korean_home_cards": 13,
+      "korean_archive_entries": 13,
+      "all_korean_listing_links": true,
+      "korean_topic_article_links": 43,
+      "empty_topics": 0,
+      "new_article_home_navigation": "Passed using its visible accessibility link",
+      "new_article_language_round_trip": "English and Korean counterpart links both passed",
+      "new_article_previous": "/logs/ko/2026/10/10/jev-kev-decision-models.html",
+      "jev_previous": "/logs/ko/2026/03/01/BlockRank.html",
+      "jev_next": "/logs/ko/2026/10/28/ontology-information-and-agent-design.html",
+      "new_article_search": {
+        "query": "온톨로지",
+        "matches": 1,
+        "url": "/logs/ko/2026/10/28/ontology-information-and-agent-design.html"
+      },
+      "result": "passed"
+    }
+  },
+  "limitations": [
+    "Article-wide math checks and source claim verification are recorded separately.",
+    "No claim of JavaScript-disabled browser execution is made. Language switches are ordinary href anchors and their generated destinations are checked statically."
+  ]
+}

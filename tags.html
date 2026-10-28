@@ -1,8 +1,6 @@
 ---
-layout: note-base
+layout: topic-notes
 title: Tags
+lang: en
+translation_url: /ko/tags.html
 ---
-<header class="page-header"><p class="eyebrow">EXPLORE BY TOPIC</p><h1>Tags</h1><p>Follow an idea across the notebook.</p></header>
-{% assign tags = site.tags | sort %}
-<nav class="tag-cloud" aria-label="Topics">{% for tag in tags %}<a href="#{{ tag[0] | slugify }}">{{ tag[0] }} <span>{{ tag[1].size }}</span></a>{% endfor %}</nav>
-{% for tag in tags %}<section class="tag-section" id="{{ tag[0] | slugify }}"><h2>{{ tag[0] }}</h2><ul class="topic-list">{% for post in tag[1] %}<li><a href="{{ post.url | relative_url }}">{{ post.title | escape }}</a><time datetime="{{ post.date | date_to_xmlschema }}">{{ post.date | date: '%Y-%m-%d' }}</time></li>{% endfor %}</ul></section>{% endfor %}

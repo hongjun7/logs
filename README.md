@@ -12,6 +12,8 @@ Use Ruby 3.3 and Bundler. Dependencies are locked in `Gemfile.lock`.
 bundle install
 bundle exec jekyll build
 python3 tools/verify_site.py
+python3 tools/verify_bilingual.py
+python3 tools/verify_translation_content.py
 python3 tools/verify_examples.py
 bundle exec jekyll serve --host 127.0.0.1 --port 4000
 ```
@@ -25,11 +27,14 @@ changes. The legacy TeXt gem remains for build compatibility; active pages use
 ## Writing an article
 
 Put posts in `_posts/YYYY-MM-DD-slug.md`. Preserve existing filenames to preserve
-URLs. Use a title, subtitle, tag array, revision date, and source-check date:
+URLs. Use a title, subtitle, tag array, revision date, source-check date, and translation links:
 
 ```yaml
 ---
 title: "A precise title"
+lang: en
+translation_key: YYYY-MM-DD-slug
+translation_url: /ko/YYYY/MM/DD/slug.html
 tags: ["machine-learning", "engineering"]
 subtitle: "A one-sentence explanation of the topic."
 last_modified_at: 2026-10-11
@@ -42,6 +47,48 @@ before derivations. Identify illustrative calculations, author-reported results,
 and locally measured results separately. Link primary papers, official docs, or
 pinned implementation revisions near the claims they support. Update the
 source-check date only after checking the relevant evidence.
+
+### English and Korean
+
+Existing English URLs stay at `/YYYY/MM/DD/slug.html`. Each complete Korean
+translation is a regular Jekyll page in `ko/YYYY-MM-DD-slug.md` with this metadata:
+
+```yaml
+---
+layout: article
+lang: ko
+date: YYYY-MM-DD
+translation_key: YYYY-MM-DD-slug
+permalink: /ko/YYYY/MM/DD/slug.html
+original_url: /YYYY/MM/DD/slug.html
+title: "한국어 제목"
+subtitle: "한국어 설명"
+tags: ["same-tags-as-the-original"]
+last_modified_at: YYYY-MM-DD
+sources_checked_at: YYYY-MM-DD
+translated_at: YYYY-MM-DD
+---
+```
+
+Keep the original article's revision and source-check dates; the translation date
+does not imply that its sources were checked again. Translate the full body,
+including caveats and figure descriptions, and preserve equations, code, cited
+URLs, and measured numbers. Each pair shares one `translation_key` and identical
+tags. Static pages require an explicit `date`; filenames alone do not set it.
+
+The EN / 한국어 links lead to the same article in the other language, including
+with JavaScript disabled. Navigation, article neighbors, archive, topics, and
+search stay in the current language. An explicit switch is remembered locally;
+there is no automatic redirect, so shared URLs and browser history remain stable.
+English posts use the existing paginator; the Korean home lists all translations.
+Search indexes both languages and filters results to the selected language.
+No custom Jekyll plugin is required.
+
+Run `python3 tools/verify_bilingual.py` after the build to check pair completeness,
+reciprocal language links, metadata, localized listings, and search isolation.
+Run `python3 tools/verify_translation_content.py` to compare equations, fenced
+code, source URLs, and section coverage across each translation pair. These
+checks protect content invariants; they do not replace semantic review of prose.
 
 ### Mathematics
 
