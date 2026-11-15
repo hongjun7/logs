@@ -1,7 +1,5 @@
 ---
 lang: en
-translation_key: 2026-10-10-jev-kev-decision-models
-translation_url: /ko/2026/10/10/jev-kev-decision-models.html
 title: "Jev and Kev"
 tags: ["machine-learning", "decision-models", "calibration", "open-source", "engineering"]
 subtitle: "Calibrated probabilities, decision costs, and the open Kev implementation"

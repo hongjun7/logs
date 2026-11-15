@@ -1,8 +1,8 @@
 ---
 layout: note-base
 ---
-{% if page.lang == 'ko' %}{% assign korean = true %}{% assign articles = site.pages | where: 'lang', 'ko' | where: 'layout', 'article' | sort: 'translation_key' | reverse %}{% else %}{% assign korean = false %}{% assign articles = site.posts %}{% endif %}
-<header class="page-header"><h1>{% if korean %}태그{% else %}Tags{% endif %}</h1><p>{% if korean %}주제별로 글을 모았습니다.{% else %}Browse articles by topic.{% endif %}</p></header>
+{% assign articles = site.posts %}
+<header class="page-header"><h1>Tags</h1><p>Browse articles by topic.</p></header>
 {% assign tags = site.tags | sort %}
-<nav class="tag-cloud" aria-label="{% if korean %}주제{% else %}Topics{% endif %}">{% for tag in tags %}{% assign tagged = articles | where_exp: 'post', 'post.tags contains tag[0]' %}<a href="#{{ tag[0] | slugify }}">{% assign slug = tag[0] %}{% include snippets/note-topic.html slug=slug %} <span>{{ tagged.size }}</span></a>{% endfor %}</nav>
+<nav class="tag-cloud" aria-label="Topics">{% for tag in tags %}{% assign tagged = articles | where_exp: 'post', 'post.tags contains tag[0]' %}<a href="#{{ tag[0] | slugify }}">{% assign slug = tag[0] %}{% include snippets/note-topic.html slug=slug %} <span>{{ tagged.size }}</span></a>{% endfor %}</nav>
 {% for tag in tags %}{% assign tagged = articles | where_exp: 'post', 'post.tags contains tag[0]' %}<section class="tag-section" id="{{ tag[0] | slugify }}"><h2>{% assign slug = tag[0] %}{% include snippets/note-topic.html slug=slug %}</h2><ul class="topic-list">{% for post in tagged %}<li><a href="{{ post.url | relative_url }}">{{ post.title | escape }}</a><time datetime="{{ post.date | date_to_xmlschema }}">{{ post.date | date: '%Y-%m-%d' }}</time></li>{% endfor %}</ul></section>{% endfor %}

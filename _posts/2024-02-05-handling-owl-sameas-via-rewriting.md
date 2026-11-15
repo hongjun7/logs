@@ -1,7 +1,5 @@
 ---
 lang: en
-translation_key: 2024-02-05-handling-owl-sameas-via-rewriting
-translation_url: /ko/2024/02/05/handling-owl-sameas-via-rewriting.html
 title: "Reasoning with owl:sameAs"
 tags: ["knowledge-graphs", "logic", "owl"]
 subtitle: "Equality reasoning with representatives, rule rewriting, and query expansion"

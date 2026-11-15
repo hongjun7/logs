@@ -91,11 +91,7 @@ def main():
         path = (SITE / post['url'][len(BASEURL):]).resolve()
         page = pages[path]
         stem = path.stem
-        if post.get('lang') == 'ko':
-            sources = [ROOT / 'ko' / f"{post['translation_key']}.md"]
-            sources = [source for source in sources if source.is_file()]
-        else:
-            sources = list((ROOT / '_posts').glob(f'*-{stem}.md'))
+        sources = list((ROOT / '_posts').glob(f'*-{stem}.md'))
         if len(sources) != 1:
             failures.append(f'{stem}: expected exactly one Markdown source')
             continue

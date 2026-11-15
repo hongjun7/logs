@@ -1,7 +1,5 @@
 ---
 lang: en
-translation_key: 2025-12-23-performance-hints
-translation_url: /ko/2025/12/23/performance-hints.html
 title: "C++ Performance Hints"
 tags: ["engineering", "performance", "cpp"]
 subtitle: "Practical C++ performance analysis through cost models and measurement"

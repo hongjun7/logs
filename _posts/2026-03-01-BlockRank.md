@@ -1,7 +1,5 @@
 ---
 lang: en
-translation_key: 2026-03-01-BlockRank
-translation_url: /ko/2026/03/01/BlockRank.html
 title: "BlockRank"
 tags: ["machine-learning", "retrieval", "attention"]
 subtitle: "Document reranking with sparse attention and direct score prediction"

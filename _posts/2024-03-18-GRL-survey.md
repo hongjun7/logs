@@ -1,7 +1,5 @@
 ---
 lang: en
-translation_key: 2024-03-18-GRL-survey
-translation_url: /ko/2024/03/18/GRL-survey.html
 title: "Reinforcement Learning on Graphs"
 tags: ["reinforcement-learning", "graphs", "graph-neural-networks"]
 subtitle: "A mathematical introduction to policies, values, and decisions on graphs"

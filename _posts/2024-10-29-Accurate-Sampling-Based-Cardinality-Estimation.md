@@ -1,7 +1,5 @@
 ---
 lang: en
-translation_key: 2024-10-29-Accurate-Sampling-Based-Cardinality-Estimation
-translation_url: /ko/2024/10/29/Accurate-Sampling-Based-Cardinality-Estimation.html
 title: "Sampling-Based Cardinality Estimation"
 tags: ["databases", "cardinality", "probability"]
 subtitle: "Inverse probability weighting for counting query answers and quantifying uncertainty"

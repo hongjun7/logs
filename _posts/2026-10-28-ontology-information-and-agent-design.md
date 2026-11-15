@@ -3,8 +3,6 @@ title: "Ontology and Agents"
 subtitle: "Formal semantics, information theory, and evidence on agent-assisted ontology design"
 tags: ["ontology", "knowledge-graphs", "information-theory", "language-models", "agents"]
 lang: en
-translation_key: 2026-10-28-ontology-information-and-agent-design
-translation_url: /ko/2026/10/28/ontology-information-and-agent-design.html
 date: 2026-10-28 09:00:00 +0900
 last_modified_at: 2026-11-15
 sources_checked_at: 2026-10-28

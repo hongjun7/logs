@@ -3,4 +3,11 @@ layout: note-base
 title: Page not found
 permalink: /404.html
 ---
+<script>
+  // Korean translations were removed; send old /ko/ links to the English article.
+  (function () {
+    var base = '{{ site.baseurl }}', prefix = base + '/ko/';
+    if (location.pathname.indexOf(prefix) === 0) location.replace(base + '/' + location.pathname.slice(prefix.length) + location.hash);
+  })();
+</script>
 <header class="page-header"><p class="eyebrow">404</p><h1>This page is missing.</h1><p>The idea you're looking for might be in the <a href="{{ '/archive.html' | relative_url }}">archive</a>. You can also <a href="{{ '/search.html' | relative_url }}">search the notebook</a>.</p></header>

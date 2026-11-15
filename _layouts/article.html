@@ -1,23 +1,22 @@
 ---
 layout: note-base
 ---
-{% assign korean = false %}{% assign home_url = '/' %}{% assign tags_url = '/tags.html' %}
-{% if page.lang == 'ko' %}{% assign korean = true %}{% assign home_url = '/ko/' %}{% assign tags_url = '/ko/tags.html' %}{% endif %}
+{% assign home_url = '/' %}{% assign tags_url = '/tags.html' %}
 <article class="research-note">
   <header class="post-header">
-    <a class="breadcrumb" href="{{ home_url | relative_url }}">{% if korean %}← 글 목록{% else %}← Posts{% endif %}</a>
+    <a class="breadcrumb" href="{{ home_url | relative_url }}">← Posts</a>
     <div class="card-topics">{% for tag in page.tags %}<a href="{{ tags_url | relative_url }}#{{ tag | slugify }}">{% include snippets/note-topic.html slug=tag %}</a>{% endfor %}</div>
     <h1>{{ page.title | escape }}</h1>
     {% if page.subtitle %}<p class="post-description">{{ page.subtitle | escape }}</p>{% endif %}
-    <div class="post-meta"><time datetime="{{ page.date | date_to_xmlschema }}">{% if korean %}{{ page.date | date: '%Y년 %-m월 %-d일' }}{% else %}{{ page.date | date: '%B %-d, %Y' }}{% endif %}</time><span aria-hidden="true">·</span><span>{% if korean %}약 {{ content | number_of_words | divided_by: 180 | plus: 1 }}분{% else %}{{ content | number_of_words | divided_by: 180 | plus: 1 }} min read{% endif %}</span><span aria-hidden="true">·</span><span>{{ site.author.name }}</span></div>
-    {% if page.last_modified_at %}<p class="revision-date">{% if korean %}수정 {{ page.last_modified_at | date: '%Y-%m-%d' }} · 자료 검토 {{ page.sources_checked_at | default: page.last_modified_at | date: '%Y-%m-%d' }}{% else %}Updated {{ page.last_modified_at | date: '%Y-%m-%d' }} · Source review {{ page.sources_checked_at | default: page.last_modified_at | date: '%Y-%m-%d' }}{% endif %}</p>{% endif %}
+    <div class="post-meta"><time datetime="{{ page.date | date_to_xmlschema }}">{{ page.date | date: '%B %-d, %Y' }}</time><span aria-hidden="true">·</span><span>{{ content | number_of_words | divided_by: 180 | plus: 1 }} min read</span><span aria-hidden="true">·</span><span>{{ site.author.name }}</span></div>
+    {% if page.last_modified_at %}<p class="revision-date">Updated {{ page.last_modified_at | date: '%Y-%m-%d' }} · Source review {{ page.sources_checked_at | default: page.last_modified_at | date: '%Y-%m-%d' }}</p>{% endif %}
   </header>
-  <details class="toc"><summary>{% if korean %}목차{% else %}Contents{% endif %}</summary><nav id="toc-list" aria-label="{% if korean %}목차{% else %}Table of contents{% endif %}"></nav></details>
+  <details class="toc"><summary>Contents</summary><nav id="toc-list" aria-label="Table of contents"></nav></details>
   <div class="article-content" id="article-content">{{ content }}</div>
-  <footer class="post-footer"><p>{% if korean %}오류나 보완할 내용이 있으면 알려 주십시오. <a href="https://github.com/hongjun7/logs/issues">이슈 남기기 ↗</a>{% else %}Have a correction? <a href="https://github.com/hongjun7/logs/issues">Open an issue ↗</a>{% endif %}</p>
-    {% if korean %}{% assign articles = site.pages | where: 'lang', 'ko' | where: 'layout', 'article' | sort: 'translation_key' %}{% else %}{% assign articles = site.posts | sort: 'date' %}{% endif %}
+  <footer class="post-footer"><p>Have a correction? <a href="https://github.com/hongjun7/logs/issues">Open an issue ↗</a></p>
+    {% assign articles = site.posts | sort: 'date' %}
     {% assign previous_article = nil %}{% assign next_article = nil %}
     {% for article in articles %}{% if article.url == page.url %}{% unless forloop.first %}{% assign previous_index = forloop.index0 | minus: 1 %}{% assign previous_article = articles[previous_index] %}{% endunless %}{% unless forloop.last %}{% assign next_index = forloop.index0 | plus: 1 %}{% assign next_article = articles[next_index] %}{% endunless %}{% break %}{% endif %}{% endfor %}
-    <nav class="post-neighbors" aria-label="{% if korean %}이전 글과 다음 글{% else %}Adjacent articles{% endif %}">{% if previous_article %}<a href="{{ previous_article.url | relative_url }}"><small>{% if korean %}이전 글{% else %}Previous{% endif %}</small>{{ previous_article.title | escape }}</a>{% endif %}{% if next_article %}<a href="{{ next_article.url | relative_url }}"><small>{% if korean %}다음 글{% else %}Next{% endif %}</small>{{ next_article.title | escape }}</a>{% endif %}</nav>
+    <nav class="post-neighbors" aria-label="Adjacent articles">{% if previous_article %}<a href="{{ previous_article.url | relative_url }}"><small>Previous</small>{{ previous_article.title | escape }}</a>{% endif %}{% if next_article %}<a href="{{ next_article.url | relative_url }}"><small>Next</small>{{ next_article.title | escape }}</a>{% endif %}</nav>
   </footer>
 </article>

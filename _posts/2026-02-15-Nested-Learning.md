@@ -1,7 +1,5 @@
 ---
 lang: en
-translation_key: 2026-02-15-Nested-Learning
-translation_url: /ko/2026/02/15/Nested-Learning.html
 title: "Nested Learning"
 tags: ["machine-learning", "memory", "continual-learning"]
 subtitle: "Associative memory, optimizer state, and learning at different update rates"

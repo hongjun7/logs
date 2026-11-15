@@ -1,7 +1,5 @@
 ---
 lang: en
-translation_key: 2024-02-10-characteristic-sets
-translation_url: /ko/2024/02/10/characteristic-sets.html
 title: "Characteristic Sets"
 tags: ["knowledge-graphs", "databases", "cardinality"]
 subtitle: "RDF query size estimation from predicates that occur together"

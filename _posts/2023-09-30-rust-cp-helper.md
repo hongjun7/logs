@@ -1,7 +1,5 @@
 ---
 lang: en
-translation_key: 2023-09-30-rust-cp-helper
-translation_url: /ko/2023/09/30/rust-cp-helper.html
 title: "Rust CP Helper"
 tags: ["engineering", "rust", "algorithms"]
 subtitle: "A practical guide to Rust for programming contests"

@@ -1,7 +1,5 @@
 ---
 lang: en
-translation_key: 2024-09-18-Towards-Better-Evaluation-for-Dynamic-Link-Prediction
-translation_url: /ko/2024/09/18/Towards-Better-Evaluation-for-Dynamic-Link-Prediction.html
 title: "Dynamic Link Prediction"
 tags: ["graphs", "evaluation", "temporal-graphs"]
 subtitle: "Time splits, negative sampling, and ranking metrics for temporal graphs"
