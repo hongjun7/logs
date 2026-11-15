@@ -4,12 +4,12 @@ translation_key: 2024-10-29-Accurate-Sampling-Based-Cardinality-Estimation
 translation_url: /ko/2024/10/29/Accurate-Sampling-Based-Cardinality-Estimation.html
 title: "Sampling-Based Cardinality Estimation"
 tags: ["databases", "cardinality", "probability"]
-subtitle: "Inverse probabilities, query semantics, and finite-sample uncertainty."
-last_modified_at: 2026-10-29
+subtitle: "Inverse probability weighting for counting query answers and quantifying uncertainty"
+last_modified_at: 2026-11-15
 sources_checked_at: 2026-10-11
 ---
 
-Inverse-probability weighting estimates a query's answer count without enumerating every answer. The estimator samples outcomes and weights them by their probabilities. Its correctness depends on what those outcomes represent: derivations, projected answers, and distinct answers are different populations.
+A query optimizer needs an answer count before it can afford to enumerate the answers. Inverse probability weighting corrects for uneven sampling: an answer that is rarely drawn receives more weight. The first step is deciding what an answer is, since multiple derivations may yield one row after duplicate removal.
 
 ## Set and bag counts
 {: id="1-define-exactly-what-is-counted"}
@@ -24,6 +24,14 @@ Projection and union separate these counts. Hu and Motik handle complex graph qu
 
 ## Inverse probabilities
 {: id="2-inverse-probability-estimation"}
+
+### Why a rare answer receives more weight
+
+Consider two answers, $$a$$ and $$b$$. Draw $$a$$ with probability $$3/4$$ and $$b$$ with probability $$1/4$$. The observation contributes $$4/3$$ when it is $$a$$ and $$4$$ when it is $$b$$; each answer contributes one *in expectation* because its selection probability cancels its weight. The estimate from any single draw is not the true count of two. Averaging independent draws reduces fluctuation; it does not change the expectation.
+
+Now take two such draws and keep each distinct answer at most once. Missing $$b$$ twice has probability $$(3/4)^2$$, so its inclusion probability is $$7/16$$ and its correct inverse-inclusion weight is $$16/7$$, not $$4$$. This is the distinction between per-draw weighting and the [Horvitz–Thompson estimator](https://doi.org/10.1080/01621459.1952.10483446). A valid answer that can never be sampled cannot be recovered by reweighting.
+
+### Draw probabilities and inclusion probabilities
 
 Draw $$a$$ from finite set $$A$$, knowing $$q(a)>0$$ for every $$a\in A$$. Define
 
@@ -67,7 +75,7 @@ $$
 \mathbb E[X]=4,\qquad\operatorname{Var}(X)=4.
 $$
 
-The mean of $$n$$ independent walks has variance $$4/n$$. This toy calculation does not bound every query's variance; rare high-degree paths can dominate the weights.
+The mean of $$n$$ independent walks has variance $$4/n$$. This calculation does not bound the variance for a different query; rare high-degree paths can dominate the weights.
 
 Longer walks multiply conditional probabilities. Closing an already bound cycle can be an existence test rather than another random selection. Multiple paths to one projected answer need separate accounting.
 

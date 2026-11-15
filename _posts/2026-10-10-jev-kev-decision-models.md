@@ -4,12 +4,12 @@ translation_key: 2026-10-10-jev-kev-decision-models
 translation_url: /ko/2026/10/10/jev-kev-decision-models.html
 title: "Jev and Kev"
 tags: ["machine-learning", "decision-models", "calibration", "open-source", "engineering"]
-subtitle: "Probability outputs, calibration, decision losses, and the open Kev implementation."
-last_modified_at: 2026-10-29
+subtitle: "Calibrated probabilities, decision costs, and the open Kev implementation"
+last_modified_at: 2026-11-15
 sources_checked_at: 2026-10-11
 ---
 
-Jev returns probability distributions over bounded decisions rather than generated explanations. Kev implements a similar interface with open weights. Their usefulness depends on calibrated probabilities, operational labels, and the loss attached to each action.
+Which team should handle a support ticket, and when should the system ask a person to decide? Jev returns a probability distribution over declared options. Kev offers a similar interface with open weights. To turn either output into a decision, check what the probabilities mean on new data and how much each mistake costs.
 
 ## Decision distributions
 {: id="1-what-problem-does-a-decision-model-solve"}
@@ -59,7 +59,7 @@ $$
 p(y=k\mid x,q,C)\ne p(y=k\mid x,q,C')
 $$
 
-when $$C\ne C'$$. An “insufficient evidence” option represents a missing outcome without guaranteeing unfamiliar-input detection. Operational descriptions must resolve mixed intents: single Choice selects one winner, whereas separate Nouls describe marginal properties.
+Changing the option set ($$C\ne C'$$) can therefore change the score of an option shared by both sets. An “insufficient evidence” option represents a missing outcome without guaranteeing unfamiliar-input detection. Operational descriptions must resolve mixed intents: single Choice selects one winner, whereas separate Nouls describe marginal properties.
 
 Questions do not read one another's answers, but their labels can remain statistically dependent. If $$\Pr(A)=0.8$$ and $$\Pr(B)=0.7$$, Fréchet bounds give
 
@@ -87,7 +87,7 @@ c_{\mathrm{score}}&=\max\left(0,1-\frac{\sum_i p_i\vert i-m\vert }{D_K}\right).
 \end{aligned}
 $$
 
-with implementation-specific tie handling. At $$K=3$$, $$D_K=2/3$$, so $$(0,0.57,0.43)$$ gives $$c_{\mathrm{score}}=0.355$$ while retaining mean $$1.43$$. Algebraically,
+The implementation decides how to break ties. At $$K=3$$, $$D_K=2/3$$, so $$(0,0.57,0.43)$$ gives $$c_{\mathrm{score}}=0.355$$ while retaining mean $$1.43$$. Algebraically,
 
 $$
 c_{\mathrm{choice}}\ge t
@@ -113,13 +113,19 @@ Hence $$t=0.9$$ at $$K=3$$ requires $$p_{\max}\ge0.933\overline3$$; confidence c
 ## Calibration
 {: id="5-accuracy-calibration-and-proper-scoring-rules"}
 
+### Same choices, different probabilities
+
+Consider ten tickets of the same kind, eight in class A and two in class B. Two models always predict A; one reports $$0.8$$ for A and the other reports $$0.99$$. Both achieve accuracy $$8/10$$. In this batch the first confidence matches the observed frequency; the second exceeds it by 19 percentage points. The first model’s average log loss is $$-0.8\log 0.8-0.2\log 0.2\approx0.500$$; the second’s is $$-0.8\log 0.99-0.2\log 0.01\approx0.929$$. The difference comes mostly from the two correct B labels to which the second model assigns only $$0.01$$. A single batch is not evidence of calibration across all tickets. For that, measure on held-out examples at different confidence levels and with enough samples in each group. See [Guo et al. (2017)](https://proceedings.mlr.press/v70/guo17a.html).
+
+### Calibration conditions and scoring rules
+
 A model assigning $$0.95$$ to 1,000 comparable tickets but answering only 800 correctly has accuracy $$0.8$$ and overconcentrated probabilities. With true class $$Y$$ and random prediction vector $$P$$, top-label calibration requires
 
 $$
 \Pr(Y=\widehat Y\mid P_{\max}=s)=s.
 $$
 
-on supported probability values. Classwise calibration requires $$\Pr(Y=k\mid P_k=s)=s$$ for each $$k$$; full-vector calibration requires $$\Pr(Y=k\mid P)=P_k$$ almost surely and is stronger. These are conditional-expectation statements; finite bins approximate them rather than defining exact continuous-value frequencies.
+The equation applies to confidence levels in the support of the predictions. Classwise calibration requires $$\Pr(Y=k\mid P_k=s)=s$$ for each $$k$$; full-vector calibration requires $$\Pr(Y=k\mid P)=P_k$$ almost surely and is stronger. These are conditional-expectation statements; finite bins approximate them rather than defining exact continuous-value frequencies.
 
 Negative log-likelihood and Brier score retain probabilities discarded by accuracy:
 
@@ -160,7 +166,7 @@ $$
 \mathbb E[R(p,Y)]=-\|p-q\|_2^2-1+\|q\|_2^2,
 $$
 
-uniquely maximized at $$p=q$$. These illustrate objectives, not Jev's undisclosed RLCD reward. Supervised cross-entropy is already proper; reinforcement learning is not required for calibration.
+This reward is uniquely maximized at $$p=q$$. These illustrate objectives, not Jev's undisclosed RLCD reward. Supervised cross-entropy is already proper; reinforcement learning is not required for calibration.
 
 Binned expected calibration error is
 
@@ -169,7 +175,7 @@ $$
 \left\vert \mathrm{acc}(I_b)-\mathrm{conf}(I_b)\right\vert .
 $$
 
-where top-label `conf` is mean top probability, not rescaled API confidence. Binning and sample size affect ECE, and within-bin errors can cancel; reliability diagrams, proper scores, and workload slices expose different errors.
+Here top-label `conf` is the mean probability of the predicted label within the bin. The calculation does not use the API’s rescaled confidence. Binning and sample size affect ECE, and within-bin errors can cancel; reliability diagrams, proper scores, and workload slices expose different errors.
 
 ### Temperature
 {: id="temperature-scaling"}
@@ -185,11 +191,13 @@ Fitting $$\tau$$ minimizes held-out calibration NLL; increasing $$\tau$$ softens
 ## Loss and actions
 {: id="6-derive-the-action-from-its-loss"}
 
-For loss $$L(a,y)$$ of action $$a$$ under truth $$y$$, the Bayes action under a calibrated posterior is
+For loss $$L(a,y)$$ of action $$a$$ under truth $$y$$, the Bayes action minimizes conditional expected loss under the true posterior:
 
 $$
 a^*(x)=\operatorname*{arg\,min}_a\sum_y L(a,y)p(y\mid x).
 $$
+
+A calibrated estimate can help approximate the posterior. Matching confidence to accuracy on average does not guarantee correct conditional probabilities for each input.
 
 With false-positive cost $$C_{\mathrm{FP}}>0$$, false-negative cost $$C_{\mathrm{FN}}>0$$, and zero correct-decision cost, the risks are $$C_{\mathrm{FP}}(1-p)$$ and $$C_{\mathrm{FN}}p$$:
 
@@ -214,7 +222,7 @@ $$
 \mathbb E[(a-Y)^2\mid x]=(a-\mathbb E[Y\mid x])^2+\operatorname{Var}(Y\mid x).
 $$
 
-has a variance term independent of $$a$$. Absolute loss selects a conditional median. Both interpretations require meaningful numerical level distances.
+The variance term does not depend on the decision $$a$$. Absolute loss selects a conditional median. Both interpretations require meaningful numerical level distances.
 
 ## Coverage
 {: id="7-measure-coverage-and-residual-risk"}
@@ -235,7 +243,7 @@ $$
 \eta=\sqrt{\frac{\log(1/\delta)}{2n_a}}.
 $$
 
-a one-sided bound at confidence $$1-\delta$$. Zero errors give exact binomial upper limit
+This is a one-sided bound at confidence $$1-\delta$$. Zero errors give exact binomial upper limit
 
 $$
 R_{\mathrm{upper}}=1-\delta^{1/n_a}.
@@ -321,7 +329,7 @@ $$
 \frac{\text{GPU price per hour}}{3600\times\text{sustained decisions per second}},
 $$
 
-only at the assumed sustained throughput/utilization. End-to-end cost adds preparation, transport, queues, policy execution, idle capacity, replicas, downloads, and operations.
+The estimate assumes the stated throughput and utilization hold over time. End-to-end cost adds preparation, transport, queues, policy execution, idle capacity, replicas, downloads, and operations.
 
 <div id="what-independent-jev-results-establish"></div>
 

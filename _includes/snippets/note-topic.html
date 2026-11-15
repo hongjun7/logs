@@ -1,0 +1,9 @@
+{%- assign topic_slug = include.slug -%}
+{%- assign topic_label = site.data.note_topics[topic_slug] -%}
+{%- assign topic_locale = include.locale | default: page.lang -%}
+{%- if topic_locale == 'ko' and topic_label -%}
+  {{- topic_label.ko | default: topic_label | escape -}}
+{%- else -%}
+  {%- assign topic_fallback = topic_slug | replace: '-', ' ' -%}
+  {{- topic_label.en | default: topic_fallback | escape -}}
+{%- endif -%}

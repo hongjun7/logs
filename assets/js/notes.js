@@ -18,7 +18,7 @@
   const themeLabel = () => {
     const dark = document.documentElement.dataset.theme === 'dark';
     toggle?.setAttribute('aria-label', localized(`Switch to ${dark ? 'light' : 'dark'} theme`, `${dark ? '밝은' : '어두운'} 테마로 전환`));
-    toggle?.setAttribute('aria-pressed', String(dark));
+    if (toggle) toggle.title = toggle.getAttribute('aria-label');
   };
   themeLabel();
   toggle?.addEventListener('click', () => {
@@ -90,11 +90,11 @@
   const render = () => {
     results.replaceChildren();
     const terms = normalize(input.value).trim().split(/\s+/).filter(Boolean);
-    if (!terms.length) { status.textContent = localized('Enter a word or phrase to start.', '검색할 단어나 구문을 입력하세요.'); return; }
+    if (!terms.length) { status.textContent = localized('Enter a word or phrase.', '검색어를 입력해 주십시오.'); return; }
     if (!index) return;
     const matches = index.filter(post => post.lang === input.dataset.lang).map(post => {
-      const title = normalize(post.title), tags = normalize(post.tags.join(' '));
-      const text = normalize(`${post.title} ${post.tags.join(' ')} ${post.description} ${post.content}`);
+      const title = normalize(post.title), tags = normalize(post.tags.join(' ') + ' ' + (post.topic_text || ''));
+      const text = [title, tags, normalize(post.description), normalize(post.content)].join(' ');
       return { post, score: terms.every(term => text.includes(term)) ? terms.reduce((sum, term) => sum + (title.includes(term) ? 4 : tags.includes(term) ? 2 : 1), 0) : 0 };
     }).filter(row => row.score).sort((a, b) => b.score - a.score);
     status.textContent = localized(`${matches.length} ${matches.length === 1 ? 'article' : 'articles'} found.`, `${matches.length}편의 글을 찾았습니다.`);
@@ -112,7 +112,7 @@
       const response = await fetch(input.dataset.index);
       if (!response.ok) throw new Error('Search index unavailable');
       index = await response.json(); render();
-    } catch (error) { status.textContent = localized('Search is unavailable. Please use Archive or try again later.', '검색을 불러오지 못했습니다. 전체 글에서 찾거나 잠시 후 다시 시도하세요.'); }
+    } catch (error) { status.textContent = localized('Search is unavailable. Please use Archive or try again later.', '검색을 불러오지 못했습니다. 전체 글에서 찾거나 잠시 후 다시 시도해 주십시오.'); }
   };
   input.addEventListener('input', () => {
     clearTimeout(timer); timer = setTimeout(render, 100);

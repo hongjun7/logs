@@ -4,12 +4,12 @@ translation_key: 2024-02-10-characteristic-sets
 translation_url: /ko/2024/02/10/characteristic-sets.html
 title: "Characteristic Sets"
 tags: ["knowledge-graphs", "databases", "cardinality"]
-subtitle: "Predicate co-occurrence, exact star counts, and cardinality estimation."
-last_modified_at: 2026-10-29
+subtitle: "RDF query size estimation from predicates that occur together"
+last_modified_at: 2026-11-15
 sources_checked_at: 2026-10-11
 ---
 
-A characteristic set records which predicates occur for a subject. This captures co-occurrence, such as books having both authors and titles. Complete counts answer restricted distinct-subject star queries exactly; multiplicities, constants, joins, and compression require more information.
+To estimate how many books have both an author and a title, count subjects with both predicates. The separate totals for authors and titles do not tell you how often they occur together. Characteristic sets record that overlap; counting full answers also requires information about how many values each subject has.
 
 ## Cardinality and planning
 {: id="1-why-an-optimizer-needs-cardinality"}
@@ -20,6 +20,12 @@ RDF graphs are sets of triples, but SPARQL generally returns a multiset of solut
 
 ## Characteristic-set partitions
 {: id="2-the-characteristic-set-partition"}
+
+### Counting subjects and counting answers
+
+Suppose three books have characteristic sets $$\{\mathtt{author},\mathtt{title}\}$$, $$\{\mathtt{author},\mathtt{title}\}$$, and $$\{\mathtt{author}\}$$. Only the first two contain both required predicates. A distinct-subject query returns two books even if the first book has two authors and one title. If the second book has one author and one title, a query that retains the author and title returns $$2\cdot1+1\cdot1=3$$ rows. Each multiplication counts the pairs of object values for one fixed subject; the sum combines subjects. This product works because the two object variables can be chosen independently once the subject is fixed. Sharing an object variable forces the choices to agree and invalidates the product. Compare [SPARQL 1.1, §§15–16 and §18](https://www.w3.org/TR/sparql11-query/) for projection, duplicate removal, and multiset joins.
+
+### Counting by characteristic set
 
 For a finite RDF graph $$R$$ with subjects $$U_R$$, define
 
@@ -44,7 +50,7 @@ $$
 N_{\mathrm{distinct}}(P)=\sum_{C\supseteq P}n_C.
 $$
 
-Each required predicate must have an outgoing edge. Set containment states precisely that condition, and each subject belongs to one class, so the sum counts it once. Bounded objects, shared object variables, arbitrary joins, or merged classes do not retain this guarantee. [Neumann and Moerkotte, 2011](https://madoc.bib.uni-mannheim.de/29788/).
+Each required predicate must have an outgoing edge. Set containment states precisely that condition, and each subject belongs to one class, so the sum counts it once. Fixed object values, shared object variables, arbitrary joins, or merged classes do not retain this guarantee. [Neumann and Moerkotte, 2011](https://madoc.bib.uni-mannheim.de/29788/).
 
 ## Binding multiplicities
 {: id="3-full-bindings-require-multiplicities"}
@@ -96,7 +102,7 @@ $$
 b_{p,o}(s)=\mathbf1\{(s,p,o)\in R\}.
 $$
 
-supports exact distinct-subject counts through sums of indicator products. A global Ada frequency can miss correlations with classes, years, or other constants.
+Summing products of these indicators gives the exact number of distinct subjects. A global Ada frequency can miss correlations with classes, years, or other constants.
 
 A probability such as $$\Pr(O=o\mid P=p)$$ needs a defined sampling universe and positive conditioning probability. Uniform triple sampling overrepresents high-degree subjects, so triple frequency is not automatically subject probability.
 

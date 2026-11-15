@@ -4,15 +4,21 @@ translation_key: 2023-09-30-rust-cp-helper
 translation_url: /ko/2023/09/30/rust-cp-helper.html
 title: "Rust CP Helper"
 tags: ["engineering", "rust", "algorithms"]
-subtitle: "Algorithms, ownership, and a reproducible Rust contest workflow."
-last_modified_at: 2026-10-29
+subtitle: "A practical guide to Rust for programming contests"
+last_modified_at: 2026-11-15
 sources_checked_at: 2026-10-11
 ---
 
-Rust's compiler catches many ownership and lifetime errors; algorithmic correctness still rests on invariants and numeric bounds. A small single-file solution, tested against the judge's toolchain, provides a reliable baseline before adding contest automation.
+Rust can catch a dangling reference at compile time, but it cannot tell you that your shortest-path algorithm is wrong. Start with one file, prove what the algorithm maintains, and check that the input bounds fit your integer types before automating the contest workflow.
 
 ## Complexity and integer bounds
 {: id="1-choose-the-algorithm-before-the-language"}
+
+### Bounding intermediate values
+
+A type must hold every intermediate value the algorithm computes. If there are at most $$n$$ nonnegative inputs and each is at most $$M$$, the largest possible sum is $$nM$$: each addition contributes at most $$M$$. With $$n=200{,}000$$ and $$M=10^9$$, this gives $$2\times10^{14}$$. The [Rust integer documentation](https://doc.rust-lang.org/std/primitive.i32.html#associatedconstant.MAX) gives the signed 32-bit limit as $$2^{31}-1$$, so the accumulator needs a wider type. Storing the final answer in a wide type does not fix an earlier overflow; widen the operands before multiplying or adding. With signed inputs, use a bound on the sum of absolute values unless you can prove a tighter bound for every prefix.
+
+### Asymptotic cost and integer types
 
 For input size $$n$$, $$O(n\log n)$$ bounds growth up to constants for sufficiently large $$n$$, not elapsed time. Repeated allocation can make an $$O(n)$$ implementation slower than an $$O(n\log n)$$ one on small inputs. Constant-factor tuning cannot make an $$O(n^2)$$ algorithm near-linear.
 
@@ -62,7 +68,7 @@ Edition 2021 is illustrative; the edition, compiler version, and crates must fol
 ## Ownership and graph storage
 {: id="3-what-safety-does-and-does-not-guarantee"}
 
-Safe Rust prevents broad classes of memory misuse, but a wrong recurrence, bounds panic, deadlock, or arithmetic error remains possible. Debug overflow checks and release wrapping defaults differ; explicit checked arithmetic detects overflow when required. [Rust integer overflow](https://doc.rust-lang.org/book/ch03-02-data-types.html).
+Safe Rust prevents many memory errors. A recurrence can still be wrong, an index can still be out of bounds, and code can still deadlock or overflow. Debug overflow checks and release wrapping defaults differ; explicit checked arithmetic detects overflow when required. [Rust integer overflow](https://doc.rust-lang.org/book/ch03-02-data-types.html).
 
 A `Vec<T>` owns its allocation; `&T` allows shared reading and `&mut T` grants exclusive access for its lifetime. Storing indices avoids holding references across vector growth: reallocation can move elements, explaining the borrowing conflict when pushing while a reference remains live.
 

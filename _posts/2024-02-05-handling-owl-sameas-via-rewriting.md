@@ -4,15 +4,23 @@ translation_key: 2024-02-05-handling-owl-sameas-via-rewriting
 translation_url: /ko/2024/02/05/handling-owl-sameas-via-rewriting.html
 title: "Reasoning with owl:sameAs"
 tags: ["knowledge-graphs", "logic", "owl"]
-subtitle: "Equality closure through representatives, rule rewriting, and query expansion."
-last_modified_at: 2026-10-29
+subtitle: "Equality reasoning with representatives, rule rewriting, and query expansion"
+last_modified_at: 2026-11-15
 sources_checked_at: 2026-10-11
 ---
 
-`owl:sameAs` identifies different names for one individual. Expanding every equivalent name into every fact can be expensive. Rewriting compresses this equality closure into representatives, while preserving rule consequences and the multiplicities of query answers.
+If two RDF names denote the same individual, a fact written with either name also applies to the other. Materializing every spelling of every fact can be expensive. A reasoner can store one representative per equality class and expand the relevant names at query time, provided it preserves the query’s semantics.
 
 ## Representatives
 {: id="1-names-individuals-and-equivalence-classes"}
+
+### From names to equivalence classes
+
+Write $$a\sim b$$ when names $$a$$ and $$b$$ are known to denote the same individual. Reflexivity gives $$a\sim a$$, symmetry lets us reverse a known equality, and transitivity lets us chain equalities. Thus if $$a\sim b$$ and $$b\sim c$$, the three names belong to one *equivalence class*. Classes cannot partly overlap: if two classes share a name, transitivity connects every name in one to every name in the other. Replacing each name by its class representative therefore maps equal names to the same identifier.
+
+This argument justifies storing facts about the denoted individual once; it does not say that the RDF terms have the same spelling. That distinction matters when an answer must expose the original term. See [OWL 2 Direct Semantics, §§2–3](https://www.w3.org/TR/owl2-direct-semantics/) for denotation and same-individual assertions.
+
+### Canonical names in the reasoner
 
 An RDF graph contains triples $$(s,p,o)$$. Equality facts generate an equivalence relation $$a\sim b$$, whose reflexive, symmetric, and transitive closure defines
 
@@ -41,7 +49,7 @@ $$
 k_s k_p k_o
 $$
 
-syntactic triples. Rule firings also depend on duplicate suppression, scheduling, and the rule set.
+This counts triples as written, before deduplication. The number of rule firings also depends on duplicate suppression, scheduling, and the rules in use.
 
 With `:alice` and `:a` in one class and the three country names in another, one normalized `livesIn` fact represents $$2\cdot1\cdot3=6$$ triples. The quotient stores that fact and class membership; its external answers can still contain all six combinations.
 
@@ -64,7 +72,7 @@ New equalities enable matches that may derive further equalities. Normalization 
 ## Correctness invariants
 {: id="4-the-central-invariants"}
 
-Let $$E$$ be the input facts and $$P$$ a finite, safe, function-free positive program with the selected equality rules. Its materialization is a least fixpoint. A compact engine maintains normalized facts $$T$$ and representatives $$\rho$$, with substitution expansion
+Let $$E$$ be the input facts and $$P$$ a finite, safe, function-free positive program with the selected equality rules. Materialization stores all facts derived by repeatedly applying the rules. Its result is the smallest fixed point containing the input facts. A compact engine maintains normalized facts $$T$$ and representatives $$\rho$$, with substitution expansion
 
 $$
 \operatorname{expand}_\rho(T)

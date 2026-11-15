@@ -4,12 +4,12 @@ translation_key: 2024-09-18-Towards-Better-Evaluation-for-Dynamic-Link-Predictio
 translation_url: /ko/2024/09/18/Towards-Better-Evaluation-for-Dynamic-Link-Prediction.html
 title: "Dynamic Link Prediction"
 tags: ["graphs", "evaluation", "temporal-graphs"]
-subtitle: "Temporal state, negative sampling, and ranking evaluation."
-last_modified_at: 2026-10-29
+subtitle: "Time splits, negative sampling, and ranking metrics for temporal graphs"
+last_modified_at: 2026-11-15
 sources_checked_at: 2026-10-11
 ---
 
-Dynamic link prediction estimates future interactions or ranks their endpoints from a time-ordered history. The observation window, candidate set, and negative sampler define the task; easy negatives can make edge memorization look like prediction.
+Given a history of timestamped interactions, can a model rank the next partner ahead of plausible alternatives? Picking only pairs that have never interacted can make a lookup table seem predictive. A meaningful comparison specifies when the model learns each event and which alternatives it must rank.
 
 ## Events and targets
 {: id="1-events-are-not-a-static-edge-set"}
@@ -48,7 +48,7 @@ $$
 E_{\mathrm{test}}\cap E_{\mathrm{train}}
 $$
 
-contains recurring pairs; $$E_{\mathrm{test}}\setminus E_{\mathrm{train}}$$ contains new pairs, possibly between familiar nodes.
+The intersection contains pairs that recur. The difference $$E_{\mathrm{test}}\setminus E_{\mathrm{train}}$$ contains new pairs, which can still connect familiar nodes.
 
 Node sets $$V_{\mathrm{train}}$$ and $$V_{\mathrm{test}}$$ define another split: an edge touching $$V_{\mathrm{test}}\setminus V_{\mathrm{train}}$$ tests new-node generalization. A benchmark’s “inductive negative sampling” follows its own protocol definition.
 
@@ -104,6 +104,12 @@ Scoring after adding the current positive would leak its label.
 
 ## Ranking metrics
 {: id="6-ranking-metrics-and-candidate-sets"}
+
+### What a sampled rank means
+
+Suppose the observed edge scores $$0.7$$ and three sampled alternatives score $$0.9,0.6,0.2$$. With no ties, exactly one alternative is ahead, so rank is $$2$$, reciprocal rank is $$1/2$$, and hit@1 is $$0$$. Replace the first alternative with one that scores $$0.1$$ and rank becomes $$1$$ even though neither the model nor the score of the observed edge changed. Mean reciprocal rank averages these per-event reciprocals; it is not the reciprocal of mean rank. With a full set of $$N$$ negative candidates, $$m$$ of them above the positive score, a uniform sample of $$k$$ distinct negatives contains $$km/N$$ higher-scoring items in expectation. The reciprocal is nonlinear, so substituting this mean into the reciprocal-rank formula does not give expected sampled MRR. The [Temporal Graph Benchmark paper](https://arxiv.org/abs/2307.01026) specifies how to construct comparison sets.
+
+### Ties and aggregate metrics
 
 For positive score $$s^+$$ and $$K$$ negative scores $$s_j^-$$, pessimistic rank is
 

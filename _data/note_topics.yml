@@ -1,0 +1,37 @@
+agents: 에이전트
+algorithms: 알고리즘
+attention: 어텐션
+calibration: 확률 보정
+cardinality: 카디널리티
+continual-learning: 지속 학습
+cpp:
+  en: C++
+  ko: C++
+databases: 데이터베이스
+decision-models: 의사결정 모델
+engineering: 소프트웨어 공학
+evaluation: 평가
+fine-tuning: 미세조정
+graph-neural-networks: 그래프 신경망
+graphs: 그래프
+imitation-learning: 모방학습
+information-theory: 정보 이론
+knowledge-graphs: 지식 그래프
+language-models: 언어 모델
+logic: 논리
+machine-learning: 머신러닝
+memory: 기억
+ontology: 온톨로지
+open-source: 오픈소스
+optimal-transport: 최적 수송
+owl:
+  en: OWL
+  ko: OWL
+performance: 성능
+probability: 확률
+reinforcement-learning: 강화학습
+retrieval: 검색
+rust:
+  en: Rust
+  ko: Rust
+temporal-graphs: 시간 그래프

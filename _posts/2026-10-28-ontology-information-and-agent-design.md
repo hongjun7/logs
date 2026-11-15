@@ -1,16 +1,16 @@
 ---
 title: "Ontology and Agents"
-subtitle: "Formal semantics and document navigation, with evidence from agent-assisted ontology engineering."
+subtitle: "Formal semantics, information theory, and evidence on agent-assisted ontology design"
 tags: ["ontology", "knowledge-graphs", "information-theory", "language-models", "agents"]
 lang: en
 translation_key: 2026-10-28-ontology-information-and-agent-design
 translation_url: /ko/2026/10/28/ontology-information-and-agent-design.html
 date: 2026-10-28 09:00:00 +0900
-last_modified_at: 2026-10-29
+last_modified_at: 2026-11-15
 sources_checked_at: 2026-10-28
 ---
 
-An ontology defines a domain’s vocabulary and axioms. A linked wiki organizes documents for reading. Both can represent the same sources; their difference lies in semantics and access, not the file extension. LLMs can help build either representation, with results that depend on the task and validation method.
+A linked wiki can help readers find a source. An ontology can specify what follows from a source once its statements are encoded as facts and axioms. The two can work with the same material. This review uses formal semantics and information theory to separate those roles, then examines evidence for agents that help build either representation.
 
 ## Ontology
 {: id="1-what-is-an-ontology-mathematically"}
@@ -79,6 +79,12 @@ Formal semantics is useful for shared types, data integration, inference, and de
 ## Information
 {: id="4-what-does-information-amount-mean"}
 
+### One bit of uncertainty, step by step
+
+Take one fixed question and two equally likely answers, yes and no. Before any evidence, each probability is $$1/2$$. Entropy averages the quantity $$-\log_2 p$$ over outcomes, so the average is $$-\tfrac12\log_2\tfrac12-\tfrac12\log_2\tfrac12=1$$ bit. If the representation contains a reliable field that determines the answer, then after observing that field one outcome has probability one and conditional entropy is zero. The representation reduces uncertainty by one bit in this example. A field that is independent of the answer leaves the probabilities at $$1/2$$ and removes zero bits, even if it is expensive to store. These statements depend on the assumed joint distribution. They do not measure byte length or certify that a field is factually correct. See [Shannon (1948), §6](https://web.mit.edu/6.976/www/handout/shannon.pdf).
+
+### Entropy and mutual information
+
 | Quantity | What it measures | What it does not establish |
 | --- | --- | --- |
 | Bytes or tokenizer tokens | Encoded length under a specified encoding | Truth, useful meaning, or evidence coverage |
@@ -100,7 +106,7 @@ $$
 I(Y;R\mid Q)=H(Y\mid Q)-H(Y\mid R,Q).
 $$
 
-It measures expected uncertainty reduction under a joint distribution. F1 is a different quantity, not a score in bits.
+The two entropies are averages under the same joint distribution. Their difference measures how much seeing the representation helps predict the answer. F1 measures overlap with a labeled result and has no units of bits.
 
 ## Navigation
 {: id="5-same-sources-different-access-paths"}

@@ -2,17 +2,25 @@
 lang: en
 translation_key: 2024-03-18-GRL-survey
 translation_url: /ko/2024/03/18/GRL-survey.html
-title: "Graph Representation Learning"
+title: "Reinforcement Learning on Graphs"
 tags: ["reinforcement-learning", "graphs", "graph-neural-networks"]
-subtitle: "Graph features, sequential decisions, and the mathematics of policies and values."
-last_modified_at: 2026-10-29
+subtitle: "A mathematical introduction to policies, values, and decisions on graphs"
+last_modified_at: 2026-11-15
 sources_checked_at: 2026-10-11
 ---
 
-Graph representations encode relational structure for prediction and decision-making. In reinforcement learning, node and graph features parameterize policies and value functions within a specified state, action, transition, and reward model.
+Suppose an agent must find a route through a knowledge graph. Edges determine which moves it can make; the reward defines what counts as success. Graph representations help the agent choose a move or estimate its value. This article develops the decision model, then connects it to message passing and policy optimization.
 
 ## Graphs and decision processes
 {: id="1-specify-the-graph-and-the-decision-problem"}
+
+### States, actions, and delayed rewards
+
+In a graph traversal task, the current vertex may be enough to determine which edges are available. If revisits are prohibited, it is not enough: two paths ending at the same vertex can have different allowed moves. Include the set of visited vertices in the state in that case. This is what the Markov condition asks for: given the current state and action, earlier history adds no information about the next state or reward. Random transitions remain possible; the state must determine their distribution, not their outcome.
+
+Discounting then tells us how to compare rewards at different times. With discount $$\gamma=0.9$$, an immediate reward of $$2$$ is worth $$2$$, while a reward of $$3$$ one step later is worth $$0.9\cdot3=2.7$$. A planner needs both the reward rule and the transition probabilities to evaluate that trade-off. See [Sutton and Barto, Ch. 3](http://incompleteideas.net/book/the-book-2nd.html).
+
+### A discounted decision process
 
 Let $$G=(V,E,X)$$ contain vertices $$V$$, edges $$E$$, and optional features $$X$$. In a knowledge graph, $$E\subseteq V\times\mathcal R\times V$$ uses relation labels $$\mathcal R$$; $$(h,r,t)$$ denotes one edge.
 
@@ -111,7 +119,7 @@ $$
 F(s,a,s')=\gamma\Phi(s')-\Phi(s)
 $$
 
-whose trajectory sum telescopes. Correct terminal and boundedness conditions preserve optimal-policy rankings; arbitrary similarity rewards need not.
+Adjacent potential terms cancel in the discounted sum along a trajectory. With the appropriate terminal and boundedness conditions, policy rankings stay unchanged. A similarity bonus without this structure can change which policy is optimal.
 
 Hard masks exclude nonexistent edges and budget violations before learned ranking. An expected-cost bound such as $$\mathbb E_\pi\sum_t c_t\le B$$ instead requires a constrained-MDP formulation; a scalar penalty alone does not certify it.
 

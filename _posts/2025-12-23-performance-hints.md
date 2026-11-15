@@ -2,14 +2,14 @@
 lang: en
 translation_key: 2025-12-23-performance-hints
 translation_url: /ko/2025/12/23/performance-hints.html
-title: "Performance Hints"
+title: "C++ Performance Hints"
 tags: ["engineering", "performance", "cpp"]
-subtitle: "Bottlenecks, memory traffic, allocation, and concurrency in C++ performance work."
-last_modified_at: 2026-10-29
+subtitle: "Practical C++ performance analysis through cost models and measurement"
+last_modified_at: 2026-11-15
 sources_checked_at: 2026-10-11
 ---
 
-Performance work connects a measured bottleneck to an application metric. Allocation, memory traffic, redundant work, and contention often matter more than shorter expressions. The models below develop several ideas from Dean and Ghemawat's [Performance Hints](https://abseil.io/fast/hints.html); their numerical examples are assumed workloads, not machine measurements.
+Start with the metric users notice and measure where the program spends its time. Shaving instructions off a loop may have little effect if memory traffic, allocation, or contention dominates. The following cost models help turn advice from Dean and Ghemawat’s [Performance Hints](https://abseil.io/fast/hints.html) into testable hypotheses. The numbers are worked examples, not benchmark results.
 
 <div id="3-a-reproducible-measurement-protocol"></div>
 
@@ -40,7 +40,7 @@ $$
 T\ge\max\left(\frac{F}{P},\frac{B}{W}\right),
 $$
 
-because $$F\le PT$$ and $$B\le WT$$. Dependency stalls, caches, and contention can increase time. Substituting measured effective rates makes this an estimate rather than a guaranteed bound. A hypothetical scan of $$B=1$$ GB at $$W=50$$ GB/s takes $$20$$ ms in the bandwidth term; changing arithmetic cannot reduce that term.
+The two terms follow from the rate limits $$F\le PT$$ and $$B\le WT$$. Dependency stalls, caches, and contention can increase time. Substituting measured effective rates makes this an estimate rather than a guaranteed bound. A hypothetical scan of $$B=1$$ GB at $$W=50$$ GB/s takes $$20$$ ms in the bandwidth term; changing arithmetic cannot reduce that term.
 
 A dense scan of $$n$$ contiguous records, stride $$r$$ bytes, and cache lines of $$L$$ bytes touches roughly $$\lceil nr/L\rceil$$ lines. Structure-of-arrays can save traffic when only selected fields are read; joint field access, SIMD, prefetching, and layout overhead determine the result. Contiguous indices can reduce pointer indirection and width, but bounds, handle lifetimes, and relocation remain API contracts.
 
@@ -79,10 +79,18 @@ $$
 \mathbb E[C]=hc_h+(1-h)c_m.
 $$
 
-excludes invalidation and memory effects. Hashing, keys, eviction, storage, and dependency revisions add costs; omitting an output-affecting input from the key permits stale answers. Precomputation pays only with sufficient reuse. Sorted-vector lookup takes $$O(\log n)$$ comparisons; hashing has expected $$O(1)$$ lookup under hashing/load assumptions. Locality, footprint, and adversarial inputs still distinguish them.
+This expectation leaves out invalidation and memory costs. Hashing, keys, eviction, storage, and dependency revisions add costs; omitting an output-affecting input from the key permits stale answers. Precomputation pays only with sufficient reuse. Sorted-vector lookup takes $$O(\log n)$$ comparisons; hashing has expected $$O(1)$$ lookup under hashing/load assumptions. Locality, footprint, and adversarial inputs still distinguish them.
 
 ## Concurrency and queues
 {: id="7-concurrency-and-queueing"}
+
+### Arrival rates, service rates, and units
+
+Measure both rates in requests per second. An ideal single server receiving $$\lambda=90$$ requests/s and serving at rate $$\mu=100$$ requests/s has mean total time $$1/(100-90)=0.1$$ seconds under the assumptions of M/M/1. The mean service time alone is $$1/100=0.01$$ seconds; the rest of the average is time in the queue. At $$\lambda=99$$ with the same service rate, mean total time rises to one second. The denominator is spare service capacity, not the processing time of an individual job.
+
+To see where the result comes from, set $$\rho=\lambda/\mu$$. The stationary probability of $$j$$ jobs is $$(1-\rho)\rho^j$$ because adjacent probabilities obey the balance ratio $$\rho$$ and sum to one. The geometric series gives mean occupancy $$\rho/(1-\rho)$$. Dividing by the arrival rate via [Little’s law](https://doi.org/10.1287/opre.9.3.383) gives $$1/(\mu-\lambda)$$. This derivation requires $$0<\rho<1$$ and the M/M/1 assumptions; use measurements for real arrival bursts and tail delays.
+
+### Concurrency and the limits of the model
 
 Independent work must outweigh synchronization and scheduling costs. False sharing places independently modified variables on one cache line; padding may reduce contention while increasing footprint. For stable systems with consistent averages, Little's law is
 
@@ -90,7 +98,7 @@ $$
 L=\lambda W
 $$
 
-where $$L$$ is average work in the system, $$\lambda$$ the arrival rate, and $$W$$ mean residence time. It does not identify the delay's cause. The idealized M/M/1 model assumes Poisson arrivals, exponential service, and $$\lambda<\mu$$, giving mean residence time $$1/(\mu-\lambda)$$. This illustrates saturation sensitivity, not production tail latency.
+Here $$L$$ is the average number of requests in the system, $$\lambda$$ is the arrival rate, and $$W$$ is mean time in the system. It does not identify the delay's cause. The idealized M/M/1 model assumes Poisson arrivals, exponential service, and $$\lambda<\mu$$, giving mean residence time $$1/(\mu-\lambda)$$. This illustrates saturation sensitivity, not production tail latency.
 
 Batching adds waiting while amortizing overhead. Offered load and p50/p95/p99, with adequate samples, expose effects that closed-loop request/response benchmarks can hide.
 

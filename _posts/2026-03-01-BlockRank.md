@@ -4,12 +4,12 @@ translation_key: 2026-03-01-BlockRank
 translation_url: /ko/2026/03/01/BlockRank.html
 title: "BlockRank"
 tags: ["machine-learning", "retrieval", "attention"]
-subtitle: "Sparse document attention and supervised ranking without autoregressive decoding."
-last_modified_at: 2026-10-29
+subtitle: "Document reranking with sparse attention and direct score prediction"
+last_modified_at: 2026-11-15
 sources_checked_at: 2026-10-11
 ---
 
-BlockRank reranks candidate documents with sparse attention and a supervised attention readout. Documents read a shared prefix and themselves; final query tokens compare all candidates, allowing ranking without answer-token decoding.
+BlockRank takes a shortlist from a retriever and orders it by relevance. Each document reads the shared prefix and its own tokens; the final query segment can attend across documents. The model learns to extract ranking scores from those attention weights without generating a list of answers token by token.
 
 ## Candidate layout
 {: id="1-reranking-a-shortlist"}
@@ -26,6 +26,12 @@ Stable identifiers distinguish candidates and connect scores to returned documen
 
 ## Directional attention
 {: id="2-attention-and-a-directional-mask"}
+
+### A mask in one attention row
+
+A query vector describes what one token seeks, a key describes what another token can match, and a value is the vector that gets mixed into the output. The dot products produce one score per key for the current query. Suppose its scaled scores for three keys are $$(0,\log 2,\log 4)$$. Softmax exponentiates them and divides by their sum, giving weights $$(1/7,2/7,4/7)$$. If the third key is in another document and the mask forbids it, its score becomes $$-\infty$$. Since $$\exp(-\infty)=0$$, the resulting row is $$(1/3,2/3,0)$$. The output mixes only the permitted values, and their weights still sum to one. The mask must leave at least one valid key in the row. See [Vaswani et al., §3.2.1](https://arxiv.org/abs/1706.03762) for scaled dot-product attention.
+
+### The block mask
 
 For one head with query and key matrices $$Q,K$$ and value matrix $$V$$,
 
@@ -48,9 +54,9 @@ C_I&-\infty&-\infty&\cdots&-\infty\\
 \end{bmatrix},
 $$
 
-Diagonal blocks $$C$$ preserve within-segment causality; zero and $$-\infty$$ denote compatible whole blocks. Instructions read earlier instructions. Documents read the prefix and their own past. Final query tokens read the prefix, all documents, and their own past.
+Diagonal blocks $$C$$ preserve within-segment causality. The zero blocks allow every pair of tokens across the corresponding segments; the $$-\infty$$ blocks disallow every pair. Instructions read earlier instructions. Documents read the prefix and their own past. Final query tokens read the prefix, all documents, and their own past.
 
-No document reads another document or the final query. This asymmetry determines the information flow.
+No document reads another document or the final query. As a result, information can flow from the documents into the final query states without ever flowing from one document into another.
 
 ## Complexity
 {: id="3-deriving-the-scaling-claim"}

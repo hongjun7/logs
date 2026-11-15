@@ -4,12 +4,12 @@ translation_key: 2026-02-15-Nested-Learning
 translation_url: /ko/2026/02/15/Nested-Learning.html
 title: "Nested Learning"
 tags: ["machine-learning", "memory", "continual-learning"]
-subtitle: "Associative memory, optimizer states, and coupled learning across timescales."
-last_modified_at: 2026-10-29
+subtitle: "Associative memory, optimizer state, and learning at different update rates"
+last_modified_at: 2026-11-15
 sources_checked_at: 2026-10-11
 ---
 
-Nested Learning describes interacting learners with different context streams and update timescales. Fast associative states, optimizer traces, and slow weights provide distinct forms of memory; their update rules determine adaptation and retention.
+A model can change what it remembers from one token to the next while its main weights stay fixed. An optimizer can also retain a history of gradients across training steps. Nested Learning puts these changes in one framework by asking which state each learner updates, using which signal, and how often.
 
 ## State and parameters
 {: id="1-what-changes-when-a-model-learns"}
@@ -27,6 +27,12 @@ The paper organizes nested or parallel optimization levels and introduces Hope a
 
 ## Associative memory
 {: id="2-associative-memory-as-a-regression-problem"}
+
+### One scalar memory update
+
+Start with scalar memory $$m=0$$, key $$k=2$$, and target $$v=6$$. Its prediction is $$mk$$. For one unregularized example, squared error with a factor of one half is $$\ell(m)=(mk-v)^2/2$$; the chain rule gives $$\ell'(m)=(mk-v)k$$. At the initial value the derivative is $$-12$$. A learning rate of $$1/8$$ moves the memory to $$m=1.5$$, so its new prediction is $$3$$. The target does not go directly into memory: the update uses the current error times the key. In the matrix version, the same multiplication becomes an outer product, changing memory entries in proportion to both their output error and their input key component. This is an illustrative delta-rule calculation; see the [Nested Learning paper](https://arxiv.org/abs/2512.24695) for the full architecture.
+
+### Linear associative memory
 
 Let keys $$k_i\in\mathbb R^{d_k}$$ map to values $$v_i\in\mathbb R^{d_v}$$. A linear memory $$M\in\mathbb R^{d_v\times d_k}$$ solves
 
@@ -209,7 +215,7 @@ $$
 R_t(\theta)+\frac\lambda2\sum_jF_j(\theta_j-\theta_j^{\mathrm{old}})^2
 $$
 
-penalizes old-parameter changes using $$F_j\ge0$$. [Elastic Weight Consolidation](https://www.pnas.org/doi/10.1073/pnas.1611835114) approximates importance through Fisher information. Unlike a Hope definition, it is a comparison mechanism; replay, isolation, regularization, and consolidation have different storage/privacy costs.
+The penalty uses nonnegative weights $$F_j\ge0$$ to charge more for changing parameters that mattered to earlier tasks. [Elastic Weight Consolidation](https://www.pnas.org/doi/10.1073/pnas.1611835114) approximates importance through Fisher information. Unlike a Hope definition, it is a comparison mechanism; replay, isolation, regularization, and consolidation have different storage/privacy costs.
 
 ## Differentiating through updates
 {: id="10-differentiate-through-an-explicit-inner-update"}
