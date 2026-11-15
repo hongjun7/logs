@@ -50,7 +50,12 @@
       }
     };
   </script>
-  <script defer src="{{ '/assets/js/vendor/tex-svg.js' | relative_url }}"></script>
+  {%- comment -%}
+    MathJax 3.2.2 is 2 MB. GitHub Pages can serve it slowly enough that raw TeX
+    stays visible for many seconds, so prefer the jsDelivr copy (byte-identical
+    to the vendored file, pinned by SRI) and fall back to the local copy.
+  {%- endcomment %}
+  <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-svg.js" integrity="sha384-KKWa9jJ1MZvssLeOoXG6FiOAZfAgmzsIIfw8BXwI9+kYm0lPCbC6yTQPBC00F1/L" crossorigin="anonymous" onerror="var s=document.createElement('script');s.src='{{ '/assets/js/vendor/tex-svg.js' | relative_url }}';document.head.appendChild(s)"></script>
   {% endif %}
 </head>
 <body id="top">
